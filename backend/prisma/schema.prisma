@@ -1,0 +1,134 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  name  String @unique // "ADMIN", "PEMILIK"
+  users User[]
+}
+
+model Umkm {
+  id        Int        @id @default(autoincrement())
+  name      String     // "Toko Kue HR", "Cireng Helda", "Risol Mayo Nanda"
+  logo      String?
+  address   String?
+  phone     String?
+  users     User[]
+  materials Material[]
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String         @unique
+  password      String
+  photo         String?
+  roleId        Int
+  role          Role           @relation(fields: [roleId], references: [id])
+  umkmId        Int?
+  umkm          Umkm?          @relation(fields: [umkmId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  stockIns      StockIn[]
+  stockOuts     StockOut[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+}
+
+model Supplier {
+  id        Int        @id @default(autoincrement())
+  code      String     @unique
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  notes     String?
+  materials Material[]
+  stockIns  StockIn[]
+}
+
+model Material {
+  id           Int        @id @default(autoincrement())
+  code         String     @unique
+  name         String
+  category     String     // e.g. "Tepung", "Dairy & Lemak", "Minyak & Bumbu", "Isian & Toping"
+  unit         String     // e.g. "Kg", "Liter", "Pcs", "Bungkus", "Kaleng"
+  minStock     Int        @default(10)
+  price        Float
+  currentStock Int        @default(0)
+  supplierId   Int?
+  supplier     Supplier?  @relation(fields: [supplierId], references: [id])
+  umkmId       Int
+  umkm         Umkm       @relation(fields: [umkmId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  stockIns     StockIn[]
+  stockOuts    StockOut[]
+  forecasts    Forecast[]
+}
+
+model StockIn {
+  id              Int      @id @default(autoincrement())
+  transactionCode String   @unique
+  materialId      Int
+  material        Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  supplierId      Int?
+  supplier        Supplier?@relation(fields: [supplierId], references: [id])
+  quantity        Int
+  price           Float
+  totalPrice      Float
+  date            DateTime @default(now())
+  notes           String?
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+model StockOut {
+  id                 Int      @id @default(autoincrement())
+  transactionCode    String   @unique
+  materialId         Int
+  material           Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  quantity           Int
+  productionPurpose  String   // e.g. "Produksi Kue Bolu", "Produksi Cireng Original"
+  date               DateTime @default(now())
+  notes              String?
+  userId             Int
+  user               User     @relation(fields: [userId], references: [id])
+}
+
+model Forecast {
+  id                 Int      @id @default(autoincrement())
+  materialId         Int
+  material           Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  periodN            Int      // e.g. 3
+  forecastResult     Float
+  suggestedOrder     Int
+  forecastDate       DateTime @default(now())
+  calculationDetails String?
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String   // "DANGER", "WARNING", "INFO"
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  action      String
+  description String
+  createdAt   DateTime @default(now())
+}

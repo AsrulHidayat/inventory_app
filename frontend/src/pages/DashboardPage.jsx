@@ -1,0 +1,359 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Package, 
+  Boxes, 
+  AlertTriangle, 
+  XCircle, 
+  ArrowDownLeft, 
+  ArrowUpRight, 
+  TrendingUp, 
+  ShoppingBag,
+  Clock,
+  Sparkles
+} from 'lucide-react';
+import { 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  CartesianGrid, 
+  AreaChart, 
+  Area 
+} from 'recharts';
+import { useAuth } from '../context/AuthContext';
+import { INITIAL_MOCK_DATA } from '../services/api';
+import Badge from '../components/common/Badge';
+
+export default function DashboardPage() {
+  const { activeUmkmId, user } = useAuth();
+  const navigate = useNavigate();
+
+  // Filter bahan baku berdasarkan UMKM aktif
+  const filteredMaterials = INITIAL_MOCK_DATA.materials.filter(m => 
+    !activeUmkmId || m.umkmId === activeUmkmId
+  );
+
+  const totalJenisBahan = filteredMaterials.length;
+  const totalStokUnit = filteredMaterials.reduce((acc, m) => acc + m.currentStock, 0);
+  const hampirHabisCount = filteredMaterials.filter(m => m.currentStock > 0 && m.currentStock <= m.minStock).length;
+  const habisCount = filteredMaterials.filter(m => m.currentStock === 0).length;
+
+  const lowStockItems = filteredMaterials.filter(m => m.currentStock <= m.minStock);
+
+  // Data Grafik Barang Masuk vs Keluar
+  const chartDataMonthly = [
+    { bulan: 'Feb', masuk: 120, keluar: 95 },
+    { bulan: 'Mar', masuk: 150, keluar: 130 },
+    { bulan: 'Apr', masuk: 180, keluar: 170 },
+    { bulan: 'Mei', masuk: 210, keluar: 190 },
+    { bulan: 'Jun', masuk: 195, keluar: 205 },
+    { bulan: 'Jul', masuk: 240, keluar: 220 },
+  ];
+
+  // Data Grafik Area Tren Penggunaan
+  const chartDataUsage = [
+    { minggu: 'Mg 1', terigu: 45, telur: 20, mentega: 8 },
+    { minggu: 'Mg 2', terigu: 52, telur: 25, mentega: 12 },
+    { minggu: 'Mg 3', terigu: 48, telur: 22, mentega: 10 },
+    { minggu: 'Mg 4', terigu: 60, telur: 30, mentega: 15 },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header Welcome Banner */}
+      <div className="glass-panel p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 text-white relative overflow-hidden shadow-xl border border-amber-500/20">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold mb-2 border border-amber-500/30">
+              <Sparkles className="w-3.5 h-3.5" /> Single Moving Average Ready
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight">
+              Selamat Datang, {user?.name || 'Pengguna'} 👋
+            </h1>
+            <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+              Sistem Informasi Persediaan Bahan Baku Real-time untuk UMKM Toko Kue di Kabupaten Gowa. Pantau pergerakan stok, warning minimal, dan peramalan kebutuhan mendatang.
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate('/forecasting')}
+            className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2 transition-all self-start md:self-auto shrink-0"
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>Hitung Peramalan SMA</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 6 Key Stat Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* Total Jenis Bahan */}
+        <div className="glass-card p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Jenis Bahan</span>
+            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+              <Package className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-xl font-black text-slate-800 dark:text-slate-100">{totalJenisBahan}</div>
+          <div className="text-[10px] text-slate-400">Item Bahan Baku</div>
+        </div>
+
+        {/* Total Stok Unit */}
+        <div className="glass-card p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Total Stok</span>
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+              <Boxes className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-xl font-black text-slate-800 dark:text-slate-100">{totalStokUnit}</div>
+          <div className="text-[10px] text-slate-400">Unit Tersebar</div>
+        </div>
+
+        {/* Hampir Habis */}
+        <div className="glass-card p-4 space-y-2 border-amber-200/80 dark:border-amber-900/60 bg-amber-50/20 dark:bg-amber-950/10">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase">Hampir Habis</span>
+            <div className="p-2 rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-xl font-black text-amber-600 dark:text-amber-400">{hampirHabisCount}</div>
+          <div className="text-[10px] text-amber-600/80 dark:text-amber-400/80 font-medium">Stok &lt;= Minimal</div>
+        </div>
+
+        {/* Habis */}
+        <div className="glass-card p-4 space-y-2 border-red-200/80 dark:border-red-900/60 bg-red-50/20 dark:bg-red-950/10">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-red-600 dark:text-red-400 uppercase">Stok Habis</span>
+            <div className="p-2 rounded-xl bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300">
+              <XCircle className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-xl font-black text-red-600 dark:text-red-400">{habisCount}</div>
+          <div className="text-[10px] text-red-600/80 dark:text-red-400/80 font-medium">Kritis (0 Unit)</div>
+        </div>
+
+        {/* Masuk Hari Ini */}
+        <div className="glass-card p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Masuk Hari Ini</span>
+            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+              <ArrowDownLeft className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-xl font-black text-slate-800 dark:text-slate-100">+45</div>
+          <div className="text-[10px] text-slate-400">Unit Masuk</div>
+        </div>
+
+        {/* Keluar Hari Ini */}
+        <div className="glass-card p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Keluar Hari Ini</span>
+            <div className="p-2 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
+              <ArrowUpRight className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-xl font-black text-slate-800 dark:text-slate-100">-28</div>
+          <div className="text-[10px] text-slate-400">Dipakai Produksi</div>
+        </div>
+      </div>
+
+      {/* Visual Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bar Chart: Masuk vs Keluar */}
+        <div className="glass-panel p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Grafik Barang Masuk vs Keluar</h3>
+              <p className="text-xs text-slate-400">Perbandingan pergerakan volume stok 6 bulan terakhir</p>
+            </div>
+            <div className="flex items-center gap-3 text-xs font-medium">
+              <div className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded-sm bg-amber-500" /> Masuk
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded-sm bg-slate-400" /> Keluar
+              </div>
+            </div>
+          </div>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartDataMonthly}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                <XAxis dataKey="bulan" stroke="#94a3b8" fontSize={11} />
+                <YAxis stroke="#94a3b8" fontSize={11} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
+                />
+                <Bar dataKey="masuk" fill="#F59E0B" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="keluar" fill="#64748b" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Area Chart: Tren Penggunaan */}
+        <div className="glass-panel p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Tren Penggunaan Bahan Baku Utama</h3>
+              <p className="text-xs text-slate-400">Estimasi konsumsi bahan baku per minggu bulan ini</p>
+            </div>
+            <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500">
+              Update Real-time
+            </span>
+          </div>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartDataUsage}>
+                <defs>
+                  <linearGradient id="colorTerigu" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorTelur" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                <XAxis dataKey="minggu" stroke="#94a3b8" fontSize={11} />
+                <YAxis stroke="#94a3b8" fontSize={11} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
+                />
+                <Area type="monotone" dataKey="terigu" name="Tepung Terigu" stroke="#F59E0B" fillOpacity={1} fill="url(#colorTerigu)" strokeWidth={2} />
+                <Area type="monotone" dataKey="telur" name="Telur Ayam" stroke="#3B82F6" fillOpacity={1} fill="url(#colorTelur)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Critical Stock Alert Feed & Single Moving Average Preview */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Low Stock Items Alert Feed */}
+        <div className="lg:col-span-2 glass-panel p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Daftar Bahan Hampir Habis & Habis</h3>
+            </div>
+            <button 
+              onClick={() => navigate('/inventory/stock')}
+              className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              Lihat Semua Stok →
+            </button>
+          </div>
+
+          {lowStockItems.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-400">
+              🎉 Semua stok bahan baku dalam kondisi aman melebihi batas minimal.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-semibold uppercase text-[10px]">
+                    <th className="py-2.5 px-3">Kode & Nama Bahan</th>
+                    <th className="py-2.5 px-3">Supplier</th>
+                    <th className="py-2.5 px-3">Stok / Min</th>
+                    <th className="py-2.5 px-3">Status</th>
+                    <th className="py-2.5 px-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {lowStockItems.map(item => (
+                    <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition-colors">
+                      <td className="py-3 px-3">
+                        <div className="font-bold text-slate-800 dark:text-slate-200">{item.name}</div>
+                        <div className="text-[10px] text-slate-400">{item.code} • {item.category}</div>
+                      </td>
+                      <td className="py-3 px-3 text-slate-600 dark:text-slate-400">{item.supplierName}</td>
+                      <td className="py-3 px-3 font-bold text-slate-800 dark:text-slate-200">
+                        <span className={item.currentStock === 0 ? 'text-red-500 font-black' : 'text-amber-600'}>
+                          {item.currentStock}
+                        </span> / {item.minStock} {item.unit}
+                      </td>
+                      <td className="py-3 px-3">
+                        <Badge status={item.status} />
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <button
+                          onClick={() => navigate(`/forecasting?materialId=${item.id}`)}
+                          className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[11px] font-bold shadow-sm transition-all flex items-center gap-1 ml-auto"
+                        >
+                          <TrendingUp className="w-3 h-3" /> Hitung Restok
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Widget Summary Peramalan SMA */}
+        <div className="glass-panel p-6 space-y-4 bg-gradient-to-br from-amber-500/10 via-slate-900/50 to-slate-950 border border-amber-500/30">
+          <div className="flex items-center gap-2 text-amber-500">
+            <Sparkles className="w-5 h-5" />
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Prediksi SMA Minggu Depan</h3>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Metode Single Moving Average (n=3) menghitung rata-rata bergerak konsumsi bahan baku untuk rekomendasi pengadaan yang akurat.
+          </p>
+
+          <div className="space-y-3 pt-2">
+            <div className="glass-card p-3 flex items-center justify-between border-amber-500/20">
+              <div>
+                <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Keju Cheddar Prochiz</div>
+                <div className="text-[10px] text-slate-400">Prediksi: 15 Pcs</div>
+              </div>
+              <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded-lg text-xs font-bold">
+                Order +25 Pcs
+              </span>
+            </div>
+
+            <div className="glass-card p-3 flex items-center justify-between border-amber-500/20">
+              <div>
+                <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Mentega Wijsman</div>
+                <div className="text-[10px] text-slate-400">Prediksi: 8 Kg</div>
+              </div>
+              <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold">
+                Order +15 Kg
+              </span>
+            </div>
+
+            <div className="glass-card p-3 flex items-center justify-between border-amber-500/20">
+              <div>
+                <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Minyak Goreng Bimoli</div>
+                <div className="text-[10px] text-slate-400">Prediksi: 25 Liter</div>
+              </div>
+              <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold">
+                Order +38 Liter
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigate('/forecasting')}
+            className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 mt-4"
+          >
+            <span>Buka Modul Peramalan Lengkap</span>
+            <TrendingUp className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
