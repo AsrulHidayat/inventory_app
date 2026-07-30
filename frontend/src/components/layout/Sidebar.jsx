@@ -59,7 +59,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         {/* Header UMKM Brand */}
         <div className="p-5 border-b border-slate-100 dark:border-slate-800/80">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-400 p-0.5 shadow-md flex items-center justify-center text-white shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-white shrink-0">
               {currentUmkm?.logo ? (
                 <img src={currentUmkm.logo} alt={currentUmkm.name} className="w-full h-full object-cover rounded-[10px]" />
               ) : (

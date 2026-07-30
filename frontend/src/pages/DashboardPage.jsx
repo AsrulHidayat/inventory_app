@@ -1,27 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Package, 
-  Boxes, 
-  AlertTriangle, 
-  XCircle, 
-  ArrowDownLeft, 
-  ArrowUpRight, 
-  TrendingUp, 
+import {
+  Package,
+  Boxes,
+  AlertTriangle,
+  XCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
+  TrendingUp,
   ShoppingBag,
   Clock,
   Sparkles
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  CartesianGrid, 
-  AreaChart, 
-  Area 
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  AreaChart,
+  Area
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { INITIAL_MOCK_DATA } from '../services/api';
@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
 
   // Filter bahan baku berdasarkan UMKM aktif
-  const filteredMaterials = INITIAL_MOCK_DATA.materials.filter(m => 
+  const filteredMaterials = INITIAL_MOCK_DATA.materials.filter(m =>
     !activeUmkmId || m.umkmId === activeUmkmId
   );
 
@@ -64,15 +64,14 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header Welcome Banner */}
-      <div className="glass-panel p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 text-white relative overflow-hidden shadow-xl border border-amber-500/20">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="glass-panel p-6 bg-slate-900 text-white relative overflow-hidden border border-slate-800">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold mb-2 border border-amber-500/30">
               <Sparkles className="w-3.5 h-3.5" /> Single Moving Average Ready
             </div>
             <h1 className="text-2xl font-extrabold tracking-tight">
-              Selamat Datang, {user?.name || 'Pengguna'} 👋
+              Selamat Datang, {user?.name || 'Pengguna'}
             </h1>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl">
               Sistem Informasi Persediaan Bahan Baku Real-time untuk UMKM Toko Kue di Kabupaten Gowa. Pantau pergerakan stok, warning minimal, dan peramalan kebutuhan mendatang.
@@ -189,7 +188,7 @@ export default function DashboardPage() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                 <XAxis dataKey="bulan" stroke="#94a3b8" fontSize={11} />
                 <YAxis stroke="#94a3b8" fontSize={11} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
                 />
                 <Bar dataKey="masuk" fill="#F59E0B" radius={[6, 6, 0, 0]} />
@@ -216,18 +215,18 @@ export default function DashboardPage() {
               <AreaChart data={chartDataUsage}>
                 <defs>
                   <linearGradient id="colorTerigu" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorTelur" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                 <XAxis dataKey="minggu" stroke="#94a3b8" fontSize={11} />
                 <YAxis stroke="#94a3b8" fontSize={11} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
                 />
                 <Area type="monotone" dataKey="terigu" name="Tepung Terigu" stroke="#F59E0B" fillOpacity={1} fill="url(#colorTerigu)" strokeWidth={2} />
@@ -247,7 +246,7 @@ export default function DashboardPage() {
               <AlertTriangle className="w-5 h-5 text-amber-500" />
               <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Daftar Bahan Hampir Habis & Habis</h3>
             </div>
-            <button 
+            <button
               onClick={() => navigate('/inventory/stock')}
               className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline"
             >
