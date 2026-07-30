@@ -101,7 +101,7 @@ export default function ForecastPage() {
       </div>
 
       {/* Control Selector Panel */}
-      <div className="glass-panel p-6 bg-slate-900 border border-slate-800">
+      <div className="p-6 bg-slate-900 text-white rounded-2xl border border-slate-800">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
@@ -213,7 +213,7 @@ export default function ForecastPage() {
           {/* Right Column: Key Forecast Output & Purchasing Recommendation Card */}
           <div className="space-y-6">
             {/* Forecast Output Card */}
-            <div className="glass-panel p-6 space-y-4 bg-slate-900 border border-slate-800">
+            <div className="p-6 space-y-4 bg-slate-900 text-white rounded-2xl border border-slate-800">
               <div className="flex items-center gap-2 text-amber-400">
                 <TrendingUp className="w-5 h-5" />
                 <span className="text-xs font-bold uppercase tracking-wider">Hasil Prediksi Peramalan</span>

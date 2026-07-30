@@ -64,16 +64,13 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header Welcome Banner */}
-      <div className="glass-panel p-6 bg-slate-900 text-white relative overflow-hidden border border-slate-800">
+      <div className="glass-panel p-6 bg-amber-500/10 dark:bg-slate-900/80 border border-amber-500/20 dark:border-slate-800 backdrop-blur-md relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold mb-2 border border-amber-500/30">
-              <Sparkles className="w-3.5 h-3.5" /> Single Moving Average Ready
-            </div>
-            <h1 className="text-2xl font-extrabold tracking-tight">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               Selamat Datang, {user?.name || 'Pengguna'}
             </h1>
-            <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 max-w-2xl">
               Sistem Informasi Persediaan Bahan Baku Real-time untuk UMKM Toko Kue di Kabupaten Gowa. Pantau pergerakan stok, warning minimal, dan peramalan kebutuhan mendatang.
             </p>
           </div>
