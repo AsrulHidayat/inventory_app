@@ -148,15 +148,15 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                     key={item.path}
                     to={item.path}
                     onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 group ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all duration-150 group relative ${
                       isActive 
-                        ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20 font-bold' 
+                        ? 'bg-amber-100/70 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-extrabold border border-amber-200/90 dark:border-amber-900/60' 
                         : item.highlight
-                          ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-900/60'
+                          ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-semibold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-900/60 font-semibold'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : ''}`} />
+                    <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? 'text-amber-600 dark:text-amber-400' : ''}`} />
                     <span className="truncate">{item.label}</span>
                     {item.highlight && !isActive && (
                       <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">
@@ -182,13 +182,13 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                     key={item.path}
                     to={item.path}
                     onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all duration-150 ${
                       isActive 
-                        ? 'bg-amber-500 text-white shadow-md' 
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-900/60'
+                        ? 'bg-amber-100/70 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-extrabold border border-amber-200/90 dark:border-amber-900/60' 
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-900/60 font-semibold'
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-amber-600 dark:text-amber-400' : ''}`} />
                     <span>{item.label}</span>
                   </NavLink>
                 );
