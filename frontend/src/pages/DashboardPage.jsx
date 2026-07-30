@@ -81,7 +81,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => navigate('/forecasting')}
-            className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2 transition-all self-start md:self-auto shrink-0"
+            className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-none flex items-center justify-center gap-2 transition-all self-start md:self-auto shrink-0"
           >
             <TrendingUp className="w-4 h-4" />
             <span>Hitung Peramalan SMA</span>
@@ -290,7 +290,7 @@ export default function DashboardPage() {
                       <td className="py-3 px-3 text-right">
                         <button
                           onClick={() => navigate(`/forecasting?materialId=${item.id}`)}
-                          className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[11px] font-bold shadow-sm transition-all flex items-center gap-1 ml-auto"
+                          className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[11px] font-bold shadow-none transition-all flex items-center gap-1 ml-auto"
                         >
                           <TrendingUp className="w-3 h-3" /> Hitung Restok
                         </button>
