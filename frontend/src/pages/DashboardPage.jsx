@@ -303,51 +303,58 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Widget Summary Peramalan SMA */}
-        <div className="glass-panel p-6 space-y-4 bg-gradient-to-br from-amber-500/10 via-slate-900/50 to-slate-950 border border-amber-500/30">
-          <div className="flex items-center gap-2 text-amber-500">
-            <Sparkles className="w-5 h-5" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Prediksi SMA Minggu Depan</h3>
+        {/* Widget Summary Peramalan SMA - Primary Color Background Model */}
+        <div className="p-6 space-y-4 rounded-2xl border-2 border-amber-500 bg-amber-500/15 dark:bg-amber-950/40 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              <h3 className="text-sm font-extrabold text-amber-950 dark:text-amber-200">Prediksi SMA Minggu Depan</h3>
+            </div>
+            <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white text-[10px] font-extrabold uppercase tracking-wider shadow-none">
+              SMA (n=3)
+            </span>
           </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
+
+          <p className="text-xs text-amber-900 dark:text-amber-200 font-semibold leading-relaxed">
             Metode Single Moving Average (n=3) menghitung rata-rata bergerak konsumsi bahan baku untuk rekomendasi pengadaan yang akurat.
           </p>
 
-          <div className="space-y-3 pt-2">
-            <div className="glass-card p-3 flex items-center justify-between border-amber-500/20">
+          <div className="space-y-2.5 pt-1">
+            <div className="p-3 rounded-xl border border-amber-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shadow-none">
               <div>
-                <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Keju Cheddar Prochiz</div>
-                <div className="text-[10px] text-slate-400">Prediksi: 15 Pcs</div>
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Keju Cheddar Prochiz</div>
+                <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Prediksi: 15 Pcs</div>
               </div>
-              <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded-lg text-xs font-bold">
+              <span className="px-3 py-1 rounded-lg bg-red-500 text-white text-xs font-extrabold shadow-none">
                 Order +25 Pcs
               </span>
             </div>
 
-            <div className="glass-card p-3 flex items-center justify-between border-amber-500/20">
+            <div className="p-3 rounded-xl border border-amber-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shadow-none">
               <div>
-                <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Mentega Wijsman</div>
-                <div className="text-[10px] text-slate-400">Prediksi: 8 Kg</div>
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Mentega Wijsman</div>
+                <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Prediksi: 8 Kg</div>
               </div>
-              <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold">
+              <span className="px-3 py-1 rounded-lg bg-amber-500 text-white text-xs font-extrabold shadow-none">
                 Order +15 Kg
               </span>
             </div>
 
-            <div className="glass-card p-3 flex items-center justify-between border-amber-500/20">
+            <div className="p-3 rounded-xl border border-amber-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shadow-none">
               <div>
-                <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Minyak Goreng Bimoli</div>
-                <div className="text-[10px] text-slate-400">Prediksi: 25 Liter</div>
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Minyak Goreng Bimoli</div>
+                <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Prediksi: 25 Liter</div>
               </div>
-              <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold">
+              <span className="px-3 py-1 rounded-lg bg-amber-500 text-white text-xs font-extrabold shadow-none">
                 Order +38 Liter
               </span>
             </div>
           </div>
 
+          {/* CTA Button without shadow */}
           <button
             onClick={() => navigate('/forecasting')}
-            className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 mt-4"
+            className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white rounded-xl font-extrabold text-xs shadow-none border-none transition-colors flex items-center justify-center gap-2 mt-2"
           >
             <span>Buka Modul Peramalan Lengkap</span>
             <TrendingUp className="w-4 h-4" />
