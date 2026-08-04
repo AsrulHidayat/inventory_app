@@ -128,8 +128,8 @@ export const AuthProvider = ({ children }) => {
       updateUserProfile,
       activeUmkmId,
       switchUmkm,
-      isAdmin: user?.role === 'ADMIN',
-      isPemilik: user?.role === 'PEMILIK',
+      isAdmin: user?.role === 'ADMIN' || user?.role?.name === 'ADMIN',
+      isPemilik: user?.role === 'PEMILIK' || user?.role?.name === 'PEMILIK',
     }}>
       {children}
     </AuthContext.Provider>

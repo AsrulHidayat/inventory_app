@@ -207,7 +207,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
             />
             <div className="min-w-0 flex-1">
               <div className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{user?.name || 'Pengguna'}</div>
-              <div className="text-[10px] font-medium text-amber-600 dark:text-amber-400 capitalize">{user?.role || 'Guest'}</div>
+              <div className="text-[10px] font-medium text-amber-600 dark:text-amber-400 capitalize">{typeof user?.role === 'object' ? user?.role?.name : user?.role || 'Guest'}</div>
             </div>
           </div>
         </div>

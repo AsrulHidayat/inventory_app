@@ -84,7 +84,7 @@ export default function MaterialsPage() {
   // Filtered & Sorted Materials
   const filteredMaterials = useMemo(() => {
     return materials
-      .filter(m => !activeUmkmId || m.umkmId === activeUmkmId)
+      .filter(m => !activeUmkmId || Number(m.umkmId) === Number(activeUmkmId))
       .filter(m => {
         const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || 
                               m.code.toLowerCase().includes(search.toLowerCase());

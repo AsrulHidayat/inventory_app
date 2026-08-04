@@ -70,7 +70,7 @@ export default function StockOutPage() {
     fetchMaterials();
   }, [activeUmkmId]);
 
-  const availableMaterials = materials.filter(m => !activeUmkmId || m.umkmId === activeUmkmId);
+  const availableMaterials = materials.filter(m => !activeUmkmId || Number(m.umkmId) === Number(activeUmkmId));
 
   const filteredTransactions = stockOuts.filter(t => 
     (t.materialName || '').toLowerCase().includes(search.toLowerCase()) || 
