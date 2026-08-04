@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -110,7 +110,7 @@ model Forecast {
   forecastResult     Float
   suggestedOrder     Int
   forecastDate       DateTime @default(now())
-  calculationDetails String?
+  calculationDetails String?  @db.Text
 }
 
 model Notification {
