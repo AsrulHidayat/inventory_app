@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Plus, 
   Search, 
@@ -11,7 +11,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { INITIAL_MOCK_DATA } from '../services/api';
+import api, { INITIAL_MOCK_DATA } from '../services/api';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Swal from 'sweetalert2';
@@ -21,7 +21,9 @@ import 'jspdf-autotable';
 
 export default function MaterialsPage() {
   const { activeUmkmId } = useAuth();
-  const [materials, setMaterials] = useState(INITIAL_MOCK_DATA.materials);
+  const [materials, setMaterials] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -41,8 +43,43 @@ export default function MaterialsPage() {
     minStock: 10,
     price: 15000,
     currentStock: 20,
-    supplierId: 1,
+    supplierId: '',
   });
+
+  const fetchMaterials = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/materials', {
+        params: activeUmkmId ? { umkmId: activeUmkmId } : {}
+      });
+      if (res.data?.success) {
+        setMaterials(res.data.data.map(m => ({
+          ...m,
+          supplierName: m.supplier?.name || '-'
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching materials from API:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSuppliers = async () => {
+    try {
+      const res = await api.get('/suppliers');
+      if (res.data?.success) {
+        setSuppliers(res.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching suppliers from API:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchMaterials();
+    fetchSuppliers();
+  }, [activeUmkmId]);
 
   // Filtered & Sorted Materials
   const filteredMaterials = useMemo(() => {
@@ -95,7 +132,7 @@ export default function MaterialsPage() {
         minStock: material.minStock,
         price: material.price,
         currentStock: material.currentStock,
-        supplierId: material.supplierId || 1,
+        supplierId: material.supplierId || '',
       });
     } else {
       setEditingMaterial(null);
@@ -108,67 +145,69 @@ export default function MaterialsPage() {
         minStock: 10,
         price: 15000,
         currentStock: 25,
-        supplierId: 1,
+        supplierId: suppliers[0]?.id || '',
       });
     }
     setIsModalOpen(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    const sup = INITIAL_MOCK_DATA.suppliers.find(s => s.id === Number(formData.supplierId));
-    
-    let status = 'Aman';
-    let statusCode = 'AMAN';
-    let statusColor = 'success';
-    if (Number(formData.currentStock) === 0) {
-      status = 'Habis'; statusCode = 'HABIS'; statusColor = 'danger';
-    } else if (Number(formData.currentStock) <= Number(formData.minStock)) {
-      status = 'Hampir Habis'; statusCode = 'HAMPIR_HABIS'; statusColor = 'warning';
-    }
-
-    if (editingMaterial) {
-      setMaterials(prev => prev.map(m => m.id === editingMaterial.id ? {
-        ...m,
-        ...formData,
+    try {
+      const payload = {
+        code: formData.code,
+        name: formData.name,
+        category: formData.category,
+        unit: formData.unit,
         price: Number(formData.price),
         minStock: Number(formData.minStock),
         currentStock: Number(formData.currentStock),
-        supplierName: sup ? sup.name : '-',
-        status, statusCode, statusColor,
-      } : m));
-      Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Data bahan baku diperbarui!', timer: 1500, showConfirmButton: false });
-    } else {
-      const newItem = {
-        id: Date.now(),
-        ...formData,
-        price: Number(formData.price),
-        minStock: Number(formData.minStock),
-        currentStock: Number(formData.currentStock),
-        umkmId: activeUmkmId || 1,
-        supplierName: sup ? sup.name : '-',
-        status, statusCode, statusColor,
+        supplierId: formData.supplierId ? Number(formData.supplierId) : null,
+        umkmId: activeUmkmId || 1
       };
-      setMaterials(prev => [newItem, ...prev]);
-      Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Bahan baku baru berhasil ditambahkan!', timer: 1500, showConfirmButton: false });
+
+      if (editingMaterial) {
+        const res = await api.put(`/materials/${editingMaterial.id}`, payload);
+        if (res.data?.success) {
+          Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Data bahan baku berhasil diperbarui di database!', timer: 1500, showConfirmButton: false });
+          fetchMaterials();
+        }
+      } else {
+        const res = await api.post('/materials', payload);
+        if (res.data?.success) {
+          Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Bahan baku baru berhasil ditambahkan ke database!', timer: 1500, showConfirmButton: false });
+          fetchMaterials();
+        }
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Error saving material:', err);
+      Swal.fire('Gagal', err.response?.data?.message || 'Terjadi kesalahan saat menyimpan bahan baku.', 'error');
     }
-    setIsModalOpen(false);
   };
 
   const handleDelete = (id, name) => {
     Swal.fire({
       title: 'Hapus Bahan Baku?',
-      text: `Apakah Anda yakin ingin menghapus "${name}"?`,
+      text: `Apakah Anda yakin ingin menghapus "${name}" dari database?`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#EF4444',
       cancelButtonColor: '#64748b',
       confirmButtonText: 'Ya, Hapus!',
       cancelButtonText: 'Batal'
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        setMaterials(prev => prev.filter(m => m.id !== id));
-        Swal.fire('Terhapus!', 'Data bahan baku telah dihapus.', 'success');
+        try {
+          const res = await api.delete(`/materials/${id}`);
+          if (res.data?.success) {
+            Swal.fire('Terhapus!', 'Data bahan baku telah terhapus dari database.', 'success');
+            fetchMaterials();
+          }
+        } catch (err) {
+          console.error('Error deleting material:', err);
+          Swal.fire('Gagal Hapus', err.response?.data?.message || 'Gagal menghapus data dari database.', 'error');
+        }
       }
     });
   };
@@ -492,7 +531,8 @@ export default function MaterialsPage() {
                 onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs"
               >
-                {INITIAL_MOCK_DATA.suppliers.map(s => (
+                <option value="">-- Pilih Supplier (Opsional) --</option>
+                {suppliers.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>

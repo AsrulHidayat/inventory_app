@@ -20,66 +20,63 @@ import {
   Legend 
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
-import { INITIAL_MOCK_DATA } from '../services/api';
-import { calculateSingleMovingAverage } from '../utils/movingAverage.js';
+import api from '../services/api';
 
 export default function ForecastPage() {
   const [searchParams] = useSearchParams();
   const { activeUmkmId } = useAuth();
 
-  const materials = INITIAL_MOCK_DATA.materials.filter(m => !activeUmkmId || m.umkmId === activeUmkmId);
-
+  const [materials, setMaterials] = useState([]);
   const paramMaterialId = searchParams.get('materialId');
   const [selectedMaterialId, setSelectedMaterialId] = useState(
-    paramMaterialId ? Number(paramMaterialId) : (materials[0]?.id || 1)
+    paramMaterialId ? Number(paramMaterialId) : ''
   );
 
   const [periodN, setPeriodN] = useState(3);
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchMaterials = async () => {
+    try {
+      const res = await api.get('/materials', { params: activeUmkmId ? { umkmId: activeUmkmId } : {} });
+      if (res.data?.success) {
+        setMaterials(res.data.data);
+        if (res.data.data.length > 0 && !selectedMaterialId) {
+          setSelectedMaterialId(paramMaterialId ? Number(paramMaterialId) : res.data.data[0].id);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching materials for forecast:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchMaterials();
+  }, [activeUmkmId]);
 
   const selectedMaterial = materials.find(m => m.id === Number(selectedMaterialId)) || materials[0];
 
   useEffect(() => {
-    if (!selectedMaterial) return;
+    if (!selectedMaterialId) return;
 
-    // Histori sampel 6 periode (bulan)
-    const baseUsage = Math.max(12, selectedMaterial.minStock * 1.4);
-    const historical = [
-      Math.round(baseUsage * 0.9),
-      Math.round(baseUsage * 1.1),
-      Math.round(baseUsage * 1.0),
-      Math.round(baseUsage * 1.2),
-      Math.round(baseUsage * 0.95),
-      Math.round(baseUsage * 1.15),
-    ];
+    const runForecast = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/forecast/calculate', {
+          params: { materialId: selectedMaterialId, periodN }
+        });
+        if (res.data?.success) {
+          setResult(res.data.data);
+        }
+      } catch (err) {
+        console.error('Error calculating forecast from API:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const smaResult = calculateSingleMovingAverage(
-      historical,
-      periodN,
-      selectedMaterial.currentStock,
-      selectedMaterial.minStock
-    );
-
-    const months = ['Feb 2026', 'Mar 2026', 'Apr 2026', 'Mei 2026', 'Jun 2026', 'Jul 2026'];
-    const chartData = historical.map((val, idx) => ({
-      periode: months[idx],
-      pemakaianHistoris: val,
-      forecast: idx >= historical.length - periodN ? smaResult.forecastResult : null,
-    }));
-
-    chartData.push({
-      periode: 'Prediksi (Agu 2026)',
-      pemakaianHistoris: null,
-      forecast: smaResult.forecastResult,
-      isPrediction: true
-    });
-
-    setResult({
-      ...smaResult,
-      historical,
-      chartData,
-    });
-  }, [selectedMaterialId, periodN, selectedMaterial]);
+    runForecast();
+  }, [selectedMaterialId, periodN]);
 
   if (!selectedMaterial) {
     return <div className="p-8 text-center text-xs text-slate-400">Tidak ada bahan baku yang tersedia.</div>;

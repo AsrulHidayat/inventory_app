@@ -1,93 +1,148 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, ArrowDownLeft, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { INITIAL_MOCK_DATA } from '../services/api';
+import api from '../services/api';
 import Modal from '../components/common/Modal';
 import Swal from 'sweetalert2';
 
 export default function StockInPage() {
   const { activeUmkmId, user } = useAuth();
-  const [materials, setMaterials] = useState(INITIAL_MOCK_DATA.materials);
-  const [stockIns, setStockIns] = useState([
-    { id: 1, transactionCode: 'IN-00123-001', materialId: 1, materialName: 'Tepung Terigu Cakra Kembar', supplierName: 'UD Sumber Terigu & Sembako Gowa', quantity: 20, unit: 'Kg', price: 13500, totalPrice: 270000, date: '2026-07-28', notes: 'Restok Rutin Mingguan', userName: 'Admin Utama' },
-    { id: 2, transactionCode: 'IN-00123-002', materialId: 3, materialName: 'Telur Ayam Segar', supplierName: 'CV Berkah Telur Macini', quantity: 15, unit: 'Kg', price: 29000, totalPrice: 435000, date: '2026-07-29', notes: 'Suplai Telur Harian', userName: 'Hj. Rosdiana' },
-    { id: 3, transactionCode: 'IN-00123-003', materialId: 7, materialName: 'Tepung Tapioka / Kanji', supplierName: 'UD Sumber Terigu & Sembako Gowa', quantity: 30, unit: 'Kg', price: 12000, totalPrice: 360000, date: '2026-07-30', notes: 'Restok Cireng', userName: 'Helda Rahmawati' },
-  ]);
+  const [materials, setMaterials] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [stockIns, setStockIns] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    materialId: 1,
-    supplierId: 1,
+    materialId: '',
+    supplierId: '',
     quantity: 10,
     price: 15000,
     date: new Date().toISOString().split('T')[0],
     notes: 'Pembelian barang baru',
   });
 
+  const fetchStockIns = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/transactions/in', {
+        params: activeUmkmId ? { umkmId: activeUmkmId } : {}
+      });
+      if (res.data?.success) {
+        setStockIns(res.data.data.map(item => ({
+          id: item.id,
+          transactionCode: item.transactionCode,
+          materialId: item.materialId,
+          materialName: item.material?.name || '-',
+          supplierName: item.supplier?.name || item.material?.supplier?.name || '-',
+          quantity: item.quantity,
+          unit: item.material?.unit || 'Kg',
+          price: item.price,
+          totalPrice: item.totalPrice,
+          date: new Date(item.date).toISOString().split('T')[0],
+          notes: item.notes,
+          userName: item.user?.name || 'Petugas',
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching stock ins from API:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMaterialsAndSuppliers = async () => {
+    try {
+      const [matRes, supRes] = await Promise.all([
+        api.get('/materials', { params: activeUmkmId ? { umkmId: activeUmkmId } : {} }),
+        api.get('/suppliers')
+      ]);
+      if (matRes.data?.success) {
+        setMaterials(matRes.data.data);
+        if (matRes.data.data.length > 0 && !formData.materialId) {
+          setFormData(prev => ({
+            ...prev,
+            materialId: matRes.data.data[0].id,
+            price: matRes.data.data[0].price,
+            supplierId: matRes.data.data[0].supplierId || ''
+          }));
+        }
+      }
+      if (supRes.data?.success) {
+        setSuppliers(supRes.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching materials/suppliers for stockIn:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchStockIns();
+    fetchMaterialsAndSuppliers();
+  }, [activeUmkmId]);
+
   const availableMaterials = materials.filter(m => !activeUmkmId || m.umkmId === activeUmkmId);
 
   const filteredTransactions = stockIns.filter(t => 
-    t.materialName.toLowerCase().includes(search.toLowerCase()) || 
-    t.transactionCode.toLowerCase().includes(search.toLowerCase()) ||
-    t.supplierName.toLowerCase().includes(search.toLowerCase())
+    (t.materialName || '').toLowerCase().includes(search.toLowerCase()) || 
+    (t.transactionCode || '').toLowerCase().includes(search.toLowerCase()) ||
+    (t.supplierName || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    const mat = materials.find(m => m.id === Number(formData.materialId));
-    const sup = INITIAL_MOCK_DATA.suppliers.find(s => s.id === Number(formData.supplierId));
+    try {
+      const payload = {
+        materialId: Number(formData.materialId),
+        supplierId: formData.supplierId ? Number(formData.supplierId) : null,
+        quantity: Number(formData.quantity),
+        price: Number(formData.price),
+        date: formData.date,
+        notes: formData.notes
+      };
 
-    if (!mat) return;
-
-    const qty = Number(formData.quantity);
-    const itemPrice = Number(formData.price);
-    const totalPrice = qty * itemPrice;
-    const count = stockIns.length + 1;
-    const code = `IN-${Date.now().toString().slice(-5)}-${String(count).padStart(3, '0')}`;
-
-    const newTx = {
-      id: Date.now(),
-      transactionCode: code,
-      materialId: mat.id,
-      materialName: mat.name,
-      supplierName: sup ? sup.name : '-',
-      quantity: qty,
-      unit: mat.unit,
-      price: itemPrice,
-      totalPrice,
-      date: formData.date,
-      notes: formData.notes,
-      userName: user?.name || 'Admin',
-    };
-
-    // Update local materials stock
-    setMaterials(prev => prev.map(m => m.id === mat.id ? { ...m, currentStock: m.currentStock + qty } : m));
-    setStockIns(prev => [newTx, ...prev]);
-
-    Swal.fire({
-      icon: 'success',
-      title: 'Barang Masuk Berhasil!',
-      text: `Stok ${mat.name} telah bertambah ${qty} ${mat.unit}.`,
-      timer: 1500,
-      showConfirmButton: false,
-    });
-    setIsModalOpen(false);
+      const res = await api.post('/transactions/in', payload);
+      if (res.data?.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Barang Masuk Berhasil!',
+          text: res.data.message || 'Transaksi berhasil disimpan ke database MySQL.',
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        fetchStockIns();
+        fetchMaterialsAndSuppliers();
+        setIsModalOpen(false);
+      }
+    } catch (err) {
+      console.error('Error saving stock in:', err);
+      Swal.fire('Gagal', err.response?.data?.message || 'Gagal menyimpan transaksi barang masuk.', 'error');
+    }
   };
 
   const handleDelete = (id) => {
     Swal.fire({
       title: 'Hapus Transaksi?',
-      text: 'Transaksi barang masuk ini akan dihapus.',
+      text: 'Transaksi barang masuk ini akan dihapus dari database & stok akan disesuaikan.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#EF4444',
       confirmButtonText: 'Ya, Hapus!',
       cancelButtonText: 'Batal'
-    }).then((res) => {
+    }).then(async (res) => {
       if (res.isConfirmed) {
-        setStockIns(prev => prev.filter(t => t.id !== id));
-        Swal.fire('Terhapus!', 'Transaksi dihapus.', 'success');
+        try {
+          const apiRes = await api.delete(`/transactions/in/${id}`);
+          if (apiRes.data?.success) {
+            Swal.fire('Terhapus!', 'Transaksi berhasil dihapus dari database.', 'success');
+            fetchStockIns();
+            fetchMaterialsAndSuppliers();
+          }
+        } catch (err) {
+          console.error('Error deleting stockIn:', err);
+          Swal.fire('Gagal Hapus', err.response?.data?.message || 'Gagal menghapus transaksi.', 'error');
+        }
       }
     });
   };
@@ -228,7 +283,8 @@ export default function StockInPage() {
                 onChange={(e) => setFormData({ ...formData, supplierId: Number(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs"
               >
-                {INITIAL_MOCK_DATA.suppliers.map(s => (
+                <option value="">-- Pilih Supplier --</option>
+                {suppliers.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>

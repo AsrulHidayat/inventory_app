@@ -24,22 +24,55 @@ import {
   Area
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
-import { INITIAL_MOCK_DATA } from '../services/api';
+import api from '../services/api';
 import Badge from '../components/common/Badge';
 
 export default function DashboardPage() {
   const { activeUmkmId, user } = useAuth();
   const navigate = useNavigate();
 
-  // Filter bahan baku berdasarkan UMKM aktif
-  const filteredMaterials = INITIAL_MOCK_DATA.materials.filter(m =>
-    !activeUmkmId || m.umkmId === activeUmkmId
-  );
+  const [materials, setMaterials] = useState([]);
+  const [summaryData, setSummaryData] = useState({
+    totalJenisBahan: 0,
+    totalStokUnit: 0,
+    barangHampirHabis: 0,
+    barangHabis: 0,
+    barangMasukHariIni: 0,
+    barangKeluarHariIni: 0
+  });
 
-  const totalJenisBahan = filteredMaterials.length;
-  const totalStokUnit = filteredMaterials.reduce((acc, m) => acc + m.currentStock, 0);
-  const hampirHabisCount = filteredMaterials.filter(m => m.currentStock > 0 && m.currentStock <= m.minStock).length;
-  const habisCount = filteredMaterials.filter(m => m.currentStock === 0).length;
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [matRes, sumRes] = await Promise.all([
+          api.get('/materials', { params: activeUmkmId ? { umkmId: activeUmkmId } : {} }),
+          api.get('/materials/dashboard-summary', { params: activeUmkmId ? { umkmId: activeUmkmId } : {} })
+        ]);
+
+        if (matRes.data?.success) {
+          setMaterials(matRes.data.data.map(m => ({
+            ...m,
+            supplierName: m.supplier?.name || '-'
+          })));
+        }
+
+        if (sumRes.data?.success) {
+          setSummaryData(sumRes.data.data);
+        }
+      } catch (err) {
+        console.error('Error loading dashboard data from API:', err);
+      }
+    };
+
+    fetchDashboardData();
+  }, [activeUmkmId]);
+
+  const filteredMaterials = materials;
+
+  const totalJenisBahan = summaryData.totalJenisBahan || filteredMaterials.length;
+  const totalStokUnit = summaryData.totalStokUnit || filteredMaterials.reduce((acc, m) => acc + m.currentStock, 0);
+  const hampirHabisCount = summaryData.barangHampirHabis;
+  const habisCount = summaryData.barangHabis;
 
   const lowStockItems = filteredMaterials.filter(m => m.currentStock <= m.minStock);
 
@@ -143,7 +176,7 @@ export default function DashboardPage() {
               <ArrowDownLeft className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl font-black text-slate-800 dark:text-slate-100">+45</div>
+          <div className="text-xl font-black text-slate-800 dark:text-slate-100">+{summaryData.barangMasukHariIni || 0}</div>
           <div className="text-[10px] text-slate-400">Unit Masuk</div>
         </div>
 
@@ -155,7 +188,7 @@ export default function DashboardPage() {
               <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl font-black text-slate-800 dark:text-slate-100">-28</div>
+          <div className="text-xl font-black text-slate-800 dark:text-slate-100">-{summaryData.barangKeluarHariIni || 0}</div>
           <div className="text-[10px] text-slate-400">Dipakai Produksi</div>
         </div>
       </div>

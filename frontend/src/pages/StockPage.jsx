@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Boxes, AlertTriangle, CheckCircle2, XCircle, TrendingUp, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { INITIAL_MOCK_DATA } from '../services/api';
+import api from '../services/api';
 import Badge from '../components/common/Badge';
 
 export default function StockPage() {
@@ -10,8 +10,26 @@ export default function StockPage() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
+  const [materials, setMaterials] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const materials = INITIAL_MOCK_DATA.materials.filter(m => !activeUmkmId || m.umkmId === activeUmkmId);
+  useEffect(() => {
+    const fetchMaterials = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/materials', { params: activeUmkmId ? { umkmId: activeUmkmId } : {} });
+        if (res.data?.success) {
+          setMaterials(res.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching materials in StockPage:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMaterials();
+  }, [activeUmkmId]);
 
   const filteredMaterials = materials.filter(m => {
     const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || m.code.toLowerCase().includes(search.toLowerCase());

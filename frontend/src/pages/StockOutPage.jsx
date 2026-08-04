@@ -1,118 +1,135 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, ArrowUpRight, Trash2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { INITIAL_MOCK_DATA } from '../services/api';
+import api from '../services/api';
 import Modal from '../components/common/Modal';
 import Swal from 'sweetalert2';
 
 export default function StockOutPage() {
   const { activeUmkmId, user } = useAuth();
-  const [materials, setMaterials] = useState(INITIAL_MOCK_DATA.materials);
-  const [stockOuts, setStockOuts] = useState([
-    { id: 1, transactionCode: 'OUT-00991-001', materialId: 1, materialName: 'Tepung Terigu Cakra Kembar', productionPurpose: 'Produksi Bolu Gulung & Donat', quantity: 10, unit: 'Kg', date: '2026-07-29', notes: 'Pengeluaran Batch Pagi', userName: 'Admin Utama' },
-    { id: 2, transactionCode: 'OUT-00991-002', materialId: 3, materialName: 'Telur Ayam Segar', productionPurpose: 'Produksi Kue Lapis', quantity: 5, unit: 'Kg', date: '2026-07-30', notes: 'Penggunaan Dapur Utama', userName: 'Hj. Rosdiana' },
-    { id: 3, transactionCode: 'OUT-00991-003', materialId: 9, materialName: 'Minyak Goreng Bimoli', productionPurpose: 'Goreng Cireng Crispy', quantity: 8, unit: 'Liter', date: '2026-07-30', notes: 'Produksi Cireng Helda', userName: 'Helda Rahmawati' },
-  ]);
+  const [materials, setMaterials] = useState([]);
+  const [stockOuts, setStockOuts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    materialId: 1,
+    materialId: '',
     quantity: 5,
     productionPurpose: 'Produksi Kue Harian',
     date: new Date().toISOString().split('T')[0],
     notes: '',
   });
 
+  const fetchStockOuts = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/transactions/out', {
+        params: activeUmkmId ? { umkmId: activeUmkmId } : {}
+      });
+      if (res.data?.success) {
+        setStockOuts(res.data.data.map(item => ({
+          id: item.id,
+          transactionCode: item.transactionCode,
+          materialId: item.materialId,
+          materialName: item.material?.name || '-',
+          productionPurpose: item.productionPurpose || 'Produksi',
+          quantity: item.quantity,
+          unit: item.material?.unit || 'Kg',
+          date: new Date(item.date).toISOString().split('T')[0],
+          notes: item.notes,
+          userName: item.user?.name || 'Petugas',
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching stock outs from API:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMaterials = async () => {
+    try {
+      const res = await api.get('/materials', { params: activeUmkmId ? { umkmId: activeUmkmId } : {} });
+      if (res.data?.success) {
+        setMaterials(res.data.data);
+        if (res.data.data.length > 0 && !formData.materialId) {
+          setFormData(prev => ({
+            ...prev,
+            materialId: res.data.data[0].id
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching materials for stockOut:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchStockOuts();
+    fetchMaterials();
+  }, [activeUmkmId]);
+
   const availableMaterials = materials.filter(m => !activeUmkmId || m.umkmId === activeUmkmId);
 
   const filteredTransactions = stockOuts.filter(t => 
-    t.materialName.toLowerCase().includes(search.toLowerCase()) || 
-    t.transactionCode.toLowerCase().includes(search.toLowerCase()) ||
-    t.productionPurpose.toLowerCase().includes(search.toLowerCase())
+    (t.materialName || '').toLowerCase().includes(search.toLowerCase()) || 
+    (t.transactionCode || '').toLowerCase().includes(search.toLowerCase()) ||
+    (t.productionPurpose || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    const mat = materials.find(m => m.id === Number(formData.materialId));
+    try {
+      const payload = {
+        materialId: Number(formData.materialId),
+        quantity: Number(formData.quantity),
+        productionPurpose: formData.productionPurpose,
+        date: formData.date,
+        notes: formData.notes
+      };
 
-    if (!mat) return;
-
-    const qty = Number(formData.quantity);
-
-    // Validasi stok mencukupi
-    if (mat.currentStock < qty) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Stok Tidak Mencukupi!',
-        text: `Stok ${mat.name} saat ini hanya tersisa ${mat.currentStock} ${mat.unit}, tidak cukup untuk diproses (${qty} ${mat.unit}).`,
-        confirmButtonColor: '#EF4444'
-      });
-      return;
+      const res = await api.post('/transactions/out', payload);
+      if (res.data?.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Barang Keluar Dicatat!',
+          text: res.data.message || 'Transaksi berhasil disimpan ke database MySQL.',
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        fetchStockOuts();
+        fetchMaterials();
+        setIsModalOpen(false);
+      }
+    } catch (err) {
+      console.error('Error saving stock out:', err);
+      Swal.fire('Gagal', err.response?.data?.message || 'Gagal mencatat transaksi barang keluar.', 'error');
     }
-
-    const count = stockOuts.length + 1;
-    const code = `OUT-${Date.now().toString().slice(-5)}-${String(count).padStart(3, '0')}`;
-    const newStock = mat.currentStock - qty;
-
-    const newTx = {
-      id: Date.now(),
-      transactionCode: code,
-      materialId: mat.id,
-      materialName: mat.name,
-      productionPurpose: formData.productionPurpose,
-      quantity: qty,
-      unit: mat.unit,
-      date: formData.date,
-      notes: formData.notes,
-      userName: user?.name || 'Admin',
-    };
-
-    // Update local materials stock
-    setMaterials(prev => prev.map(m => m.id === mat.id ? { 
-      ...m, 
-      currentStock: newStock,
-      status: newStock === 0 ? 'Habis' : newStock <= m.minStock ? 'Hampir Habis' : 'Aman',
-      statusCode: newStock === 0 ? 'HABIS' : newStock <= m.minStock ? 'HAMPIR_HABIS' : 'AMAN',
-      statusColor: newStock === 0 ? 'danger' : newStock <= m.minStock ? 'warning' : 'success',
-    } : m));
-
-    setStockOuts(prev => [newTx, ...prev]);
-
-    // Check warning alert
-    if (newStock <= mat.minStock) {
-      Swal.fire({
-        icon: newStock === 0 ? 'error' : 'warning',
-        title: newStock === 0 ? 'PERINGATAN: STOK HABIS!' : 'PERINGATAN: STOK MINIMAL',
-        text: `Stok ${mat.name} tersisa ${newStock} ${mat.unit}! Disarankan segera melakukan peramalan SMA untuk pengadaan.`,
-        confirmButtonColor: '#F59E0B'
-      });
-    } else {
-      Swal.fire({
-        icon: 'success',
-        title: 'Barang Keluar Dicatat!',
-        text: `Stok ${mat.name} otomatis berkurang ${qty} ${mat.unit}. Sisa stok: ${newStock} ${mat.unit}.`,
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    }
-
-    setIsModalOpen(false);
   };
 
   const handleDelete = (id) => {
     Swal.fire({
       title: 'Hapus Transaksi?',
-      text: 'Transaksi barang keluar ini akan dihapus.',
+      text: 'Transaksi barang keluar ini akan dihapus dari database & stok akan dikembalikan.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#EF4444',
       confirmButtonText: 'Ya, Hapus!',
       cancelButtonText: 'Batal'
-    }).then((res) => {
+    }).then(async (res) => {
       if (res.isConfirmed) {
-        setStockOuts(prev => prev.filter(t => t.id !== id));
-        Swal.fire('Terhapus!', 'Transaksi dihapus.', 'success');
+        try {
+          const apiRes = await api.delete(`/transactions/out/${id}`);
+          if (apiRes.data?.success) {
+            Swal.fire('Terhapus!', 'Transaksi berhasil dihapus dari database.', 'success');
+            fetchStockOuts();
+            fetchMaterials();
+          }
+        } catch (err) {
+          console.error('Error deleting stockOut:', err);
+          Swal.fire('Gagal Hapus', err.response?.data?.message || 'Gagal menghapus transaksi.', 'error');
+        }
       }
     });
   };

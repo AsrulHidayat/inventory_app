@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Users, Search, Edit, Trash2, Phone, Mail, MapPin } from 'lucide-react';
-import { INITIAL_MOCK_DATA } from '../services/api';
+import api from '../services/api';
 import Modal from '../components/common/Modal';
 import Swal from 'sweetalert2';
 
 export default function SuppliersPage() {
-  const [suppliers, setSuppliers] = useState(INITIAL_MOCK_DATA.suppliers);
+  const [suppliers, setSuppliers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState(null);
@@ -18,16 +19,41 @@ export default function SuppliersPage() {
     notes: '',
   });
 
+  const fetchSuppliers = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/suppliers');
+      if (res.data?.success) {
+        setSuppliers(res.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching suppliers from API:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
+
   const filteredSuppliers = suppliers.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    s.code.toLowerCase().includes(search.toLowerCase()) ||
-    s.address.toLowerCase().includes(search.toLowerCase())
+    (s.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (s.code || '').toLowerCase().includes(search.toLowerCase()) ||
+    (s.address || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const handleOpenModal = (sup = null) => {
     if (sup) {
       setEditingSupplier(sup);
-      setFormData({ ...sup });
+      setFormData({
+        code: sup.code || '',
+        name: sup.name || '',
+        phone: sup.phone || '',
+        email: sup.email || '',
+        address: sup.address || '',
+        notes: sup.notes || '',
+      });
     } else {
       setEditingSupplier(null);
       setFormData({
@@ -42,31 +68,49 @@ export default function SuppliersPage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editingSupplier) {
-      setSuppliers(prev => prev.map(s => s.id === editingSupplier.id ? { ...s, ...formData } : s));
-      Swal.fire('Berhasil!', 'Data supplier diperbarui.', 'success');
-    } else {
-      const newSup = { id: Date.now(), ...formData };
-      setSuppliers(prev => [...prev, newSup]);
-      Swal.fire('Berhasil!', 'Supplier baru berhasil ditambahkan.', 'success');
+    try {
+      if (editingSupplier) {
+        const res = await api.put(`/suppliers/${editingSupplier.id}`, formData);
+        if (res.data?.success) {
+          Swal.fire('Berhasil!', 'Data supplier berhasil diperbarui di database.', 'success');
+          fetchSuppliers();
+        }
+      } else {
+        const res = await api.post('/suppliers', formData);
+        if (res.data?.success) {
+          Swal.fire('Berhasil!', 'Supplier baru berhasil ditambahkan ke database.', 'success');
+          fetchSuppliers();
+        }
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Error saving supplier:', err);
+      Swal.fire('Gagal', err.response?.data?.message || 'Gagal menyimpan supplier.', 'error');
     }
-    setIsModalOpen(false);
   };
 
   const handleDelete = (id, name) => {
     Swal.fire({
       title: 'Hapus Supplier?',
-      text: `Yakin ingin menghapus ${name}?`,
+      text: `Yakin ingin menghapus supplier "${name}" dari database?`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#EF4444',
       confirmButtonText: 'Hapus',
-    }).then((res) => {
+    }).then(async (res) => {
       if (res.isConfirmed) {
-        setSuppliers(prev => prev.filter(s => s.id !== id));
-        Swal.fire('Terhapus!', 'Supplier berhasil dihapus.', 'success');
+        try {
+          const apiRes = await api.delete(`/suppliers/${id}`);
+          if (apiRes.data?.success) {
+            Swal.fire('Terhapus!', 'Supplier berhasil dihapus dari database.', 'success');
+            fetchSuppliers();
+          }
+        } catch (err) {
+          console.error('Error deleting supplier:', err);
+          Swal.fire('Gagal Hapus', err.response?.data?.message || 'Gagal menghapus supplier.', 'error');
+        }
       }
     });
   };
