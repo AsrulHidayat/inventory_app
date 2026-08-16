@@ -21,7 +21,8 @@ import {
   Tooltip,
   CartesianGrid,
   AreaChart,
-  Area
+  Area,
+  Legend
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -215,12 +216,18 @@ export default function DashboardPage() {
               <BarChart data={chartDataMonthly}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                 <XAxis dataKey="bulan" stroke="#94a3b8" fontSize={11} />
-                <YAxis stroke="#94a3b8" fontSize={11} />
+                <YAxis stroke="#94a3b8" fontSize={11} label={{ value: 'Unit', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 10, dx: -4 }} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
+                  formatter={(value, name) => [`${value} unit`, name === 'masuk' ? 'Barang Masuk' : 'Barang Keluar']}
+                  labelFormatter={(label) => `Bulan: ${label}`}
                 />
-                <Bar dataKey="masuk" fill="#F59E0B" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="keluar" fill="#64748b" radius={[6, 6, 0, 0]} />
+                <Legend
+                  formatter={(value) => value === 'masuk' ? 'Barang Masuk' : 'Barang Keluar'}
+                  wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
+                />
+                <Bar dataKey="masuk" name="masuk" fill="#F59E0B" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="keluar" name="keluar" fill="#64748b" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -231,36 +238,63 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Tren Penggunaan Bahan Baku Utama</h3>
-              <p className="text-xs text-slate-400">Estimasi konsumsi bahan baku per minggu bulan ini</p>
+              <p className="text-xs text-slate-400">Pemakaian riil bahan baku per minggu (4 minggu terakhir). Mg 4 = minggu ini.</p>
             </div>
-            <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500">
-              Update Real-time
+            <span className="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+              Real-time
             </span>
           </div>
 
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartDataUsage}>
+              <AreaChart data={chartDataUsage} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <defs>
-                  <linearGradient id="colorTerigu" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorMat1" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.4} />
                     <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="colorTelur" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorMat2" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4} />
                     <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                 <XAxis dataKey="minggu" stroke="#94a3b8" fontSize={11} />
-                <YAxis stroke="#94a3b8" fontSize={11} />
+                <YAxis stroke="#94a3b8" fontSize={11} label={{ value: 'Unit', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 10, dx: -4 }} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
+                  formatter={(value, name) => [`${value} unit dipakai`, name]}
+                  labelFormatter={(label) => {
+                    const map = { 'Mg 1': 'Mg 1 (28–21 hari lalu)', 'Mg 2': 'Mg 2 (21–14 hari lalu)', 'Mg 3': 'Mg 3 (14–7 hari lalu)', 'Mg 4': 'Mg 4 (7 hari lalu s/d hari ini)' };
+                    return map[label] || label;
+                  }}
                 />
-                <Area type="monotone" dataKey={mat1} name={mat1} stroke="#F59E0B" fillOpacity={1} fill="url(#colorTerigu)" strokeWidth={2} />
-                <Area type="monotone" dataKey={mat2} name={mat2} stroke="#3B82F6" fillOpacity={1} fill="url(#colorTelur)" strokeWidth={2} />
+                <Legend
+                  wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
+                />
+                <Area type="monotone" dataKey={mat1} name={mat1} stroke="#F59E0B" fillOpacity={1} fill="url(#colorMat1)" strokeWidth={2} dot={{ r: 4, fill: '#F59E0B' }} activeDot={{ r: 6 }} />
+                <Area type="monotone" dataKey={mat2} name={mat2} stroke="#3B82F6" fillOpacity={1} fill="url(#colorMat2)" strokeWidth={2} dot={{ r: 4, fill: '#3B82F6' }} activeDot={{ r: 6 }} />
               </AreaChart>
             </ResponsiveContainer>
+          </div>
+
+          {/* Keterangan slot minggu */}
+          <div className="grid grid-cols-4 gap-1 pt-1">
+            {[
+              { label: 'Mg 1', desc: '28–21 hari lalu' },
+              { label: 'Mg 2', desc: '21–14 hari lalu' },
+              { label: 'Mg 3', desc: '14–7 hari lalu' },
+              { label: 'Mg 4', desc: '7 hari lalu s/d hari ini', highlight: true },
+            ].map(({ label, desc, highlight }) => (
+              <div key={label} className={`rounded-lg px-2 py-1.5 text-center ${
+                highlight
+                  ? 'bg-amber-500/10 border border-amber-500/30'
+                  : 'bg-slate-100 dark:bg-slate-800/50'
+              }`}>
+                <p className={`text-[11px] font-bold ${ highlight ? 'text-amber-500' : 'text-slate-600 dark:text-slate-300' }`}>{label}</p>
+                <p className="text-[9px] text-slate-400 leading-tight mt-0.5">{desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

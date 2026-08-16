@@ -299,14 +299,9 @@ export const getDashboardSummary = async (req, res) => {
       };
     });
 
-    // Top 2 Bahan Baku Real
-    const topMaterials = materials.slice(0, 2).map(m => m.name);
-    const mat1 = topMaterials[0] || 'Bahan 1';
-    const mat2 = topMaterials[1] || 'Bahan 2';
-
-    // Ambil riwayat pemakaian real minggu ini (4 minggu terakhir)
-    const fourWeeksAgo = new Date();
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    // Ambil riwayat pemakaian real 4 minggu terakhir
+    const now = new Date();
+    const fourWeeksAgo = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
 
     const recentStockOuts = await prisma.stockOut.findMany({
       where: {
@@ -316,22 +311,44 @@ export const getDashboardSummary = async (req, res) => {
       include: { material: true }
     });
 
-    const chartUsage = ['Mg 1', 'Mg 2', 'Mg 3', 'Mg 4'].map((mgLabel, wIdx) => {
-      const wStart = new Date(fourWeeksAgo);
-      wStart.setDate(wStart.getDate() + (wIdx * 7));
-      const wEnd = new Date(wStart);
-      wEnd.setDate(wEnd.getDate() + 7);
+    // Pilih top 2 bahan baku berdasarkan total kuantitas pemakaian 4 minggu terakhir
+    const usageByMaterial = {};
+    recentStockOuts.forEach(o => {
+      const name = o.material?.name;
+      if (name) {
+        usageByMaterial[name] = (usageByMaterial[name] || 0) + (Number(o.quantity) || 0);
+      }
+    });
+    const sortedMaterials = Object.entries(usageByMaterial)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name]) => name);
+
+    // Jika tidak ada transaksi, fallback ke 2 bahan baku pertama di list
+    const fallbackMaterials = materials.slice(0, 2).map(m => m.name);
+    const mat1 = sortedMaterials[0] || fallbackMaterials[0] || 'Bahan 1';
+    const mat2 = sortedMaterials[1] || fallbackMaterials[1] || 'Bahan 2';
+
+    // Buat 4 interval mingguan: Mg1 = 3-4 minggu lalu, Mg4 = minggu ini
+    const chartUsage = [
+      { label: 'Mg 1', startDays: 28, endDays: 21 },
+      { label: 'Mg 2', startDays: 21, endDays: 14 },
+      { label: 'Mg 3', startDays: 14, endDays: 7 },
+      { label: 'Mg 4', startDays: 7, endDays: 0 },
+    ].map(slot => {
+      const wStart = new Date(now.getTime() - slot.startDays * 24 * 60 * 60 * 1000);
+      const wEnd = new Date(now.getTime() - slot.endDays * 24 * 60 * 60 * 1000);
+      wEnd.setHours(23, 59, 59, 999); // pastikan akhir hari ini included
 
       const usageMat1 = recentStockOuts
-        .filter(o => o.material?.name === mat1 && new Date(o.date) >= wStart && new Date(o.date) < wEnd)
-        .reduce((sum, o) => sum + o.quantity, 0);
+        .filter(o => o.material?.name === mat1 && new Date(o.date) >= wStart && new Date(o.date) <= wEnd)
+        .reduce((sum, o) => sum + (Number(o.quantity) || 0), 0);
 
       const usageMat2 = recentStockOuts
-        .filter(o => o.material?.name === mat2 && new Date(o.date) >= wStart && new Date(o.date) < wEnd)
-        .reduce((sum, o) => sum + o.quantity, 0);
+        .filter(o => o.material?.name === mat2 && new Date(o.date) >= wStart && new Date(o.date) <= wEnd)
+        .reduce((sum, o) => sum + (Number(o.quantity) || 0), 0);
 
       return {
-        minggu: mgLabel,
+        minggu: slot.label,
         [mat1]: usageMat1,
         [mat2]: usageMat2,
       };
