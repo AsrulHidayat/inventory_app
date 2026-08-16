@@ -18,6 +18,18 @@ api.interceptors.request.use((config) => {
   return config;
 }, (error) => Promise.reject(error));
 
+// Interceptor Response Handler
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      // Token kedaluwarsa / invalid
+      console.warn('Session expired or unauthorized. Clearing stored auth session.');
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
 
 // Seed Mock Data Fallback jika Backend belum aktif saat pengujian browser

@@ -11,6 +11,6 @@ router.get('/', getMaterials);
 router.get('/:id', getMaterialById);
 router.post('/', requireRole(['ADMIN', 'PEMILIK']), createMaterial);
 router.put('/:id', requireRole(['ADMIN', 'PEMILIK']), updateMaterial);
-router.delete('/:id', requireRole(['ADMIN']), deleteMaterial);
+router.delete('/:id', requireRole(['ADMIN', 'PEMILIK']), deleteMaterial);
 
 export default router;

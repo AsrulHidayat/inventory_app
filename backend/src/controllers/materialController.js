@@ -204,13 +204,18 @@ export const getDashboardSummary = async (req, res) => {
   try {
     const { umkmId } = req.query;
     const where = {};
+    const userRole = typeof req.user?.role === 'object' ? req.user.role?.name : req.user?.role;
+    
     if (umkmId) {
       where.umkmId = Number(umkmId);
-    } else if (req.user.role.name === 'PEMILIK' && req.user.umkmId) {
+    } else if (userRole === 'PEMILIK' && req.user.umkmId) {
       where.umkmId = req.user.umkmId;
     }
 
-    const materials = await prisma.material.findMany({ where });
+    const materials = await prisma.material.findMany({ 
+      where,
+      include: { supplier: true, umkm: true }
+    });
 
     let totalJenisBahan = materials.length;
     let totalStokUnit = 0;
@@ -243,6 +248,94 @@ export const getDashboardSummary = async (req, res) => {
       }
     });
 
+    // Kalkulasi Real Riwayat Barang Masuk vs Keluar 6 Bulan
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const currentMonthIdx = new Date().getMonth();
+    const last6Months = [];
+    for (let i = 5; i >= 0; i--) {
+      const idx = (currentMonthIdx - i + 12) % 12;
+      last6Months.push(months[idx]);
+    }
+
+    // Ambil data transaksi real untuk chart 6 bulan terakhir
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const allStockIns = await prisma.stockIn.findMany({
+      where: {
+        date: { gte: sixMonthsAgo },
+        ...(where.umkmId && { material: { umkmId: where.umkmId } })
+      },
+      select: { quantity: true, date: true }
+    });
+
+    const allStockOuts = await prisma.stockOut.findMany({
+      where: {
+        date: { gte: sixMonthsAgo },
+        ...(where.umkmId && { material: { umkmId: where.umkmId } })
+      },
+      select: { quantity: true, date: true }
+    });
+
+    // Hitung pergerakan murni berdasarkan data transaksi real di database
+    const chartMonthly = last6Months.map((bln, idx) => {
+      const targetMonthIdx = (currentMonthIdx - (5 - idx) + 12) % 12;
+      
+      const totalInMonth = allStockIns
+        .filter(t => new Date(t.date).getMonth() === targetMonthIdx)
+        .reduce((sum, t) => sum + t.quantity, 0);
+
+      const totalOutMonth = allStockOuts
+        .filter(t => new Date(t.date).getMonth() === targetMonthIdx)
+        .reduce((sum, t) => sum + t.quantity, 0);
+
+      return {
+        bulan: bln,
+        masuk: totalInMonth,
+        keluar: totalOutMonth
+      };
+    });
+
+    // Top 2 Bahan Baku Real
+    const topMaterials = materials.slice(0, 2).map(m => m.name);
+    const mat1 = topMaterials[0] || 'Bahan 1';
+    const mat2 = topMaterials[1] || 'Bahan 2';
+
+    // Ambil riwayat pemakaian real minggu ini (4 minggu terakhir)
+    const fourWeeksAgo = new Date();
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+
+    const recentStockOuts = await prisma.stockOut.findMany({
+      where: {
+        date: { gte: fourWeeksAgo },
+        ...(where.umkmId && { material: { umkmId: where.umkmId } })
+      },
+      include: { material: true }
+    });
+
+    const chartUsage = ['Mg 1', 'Mg 2', 'Mg 3', 'Mg 4'].map((mgLabel, wIdx) => {
+      const wStart = new Date(fourWeeksAgo);
+      wStart.setDate(wStart.getDate() + (wIdx * 7));
+      const wEnd = new Date(wStart);
+      wEnd.setDate(wEnd.getDate() + 7);
+
+      const usageMat1 = recentStockOuts
+        .filter(o => o.material?.name === mat1 && new Date(o.date) >= wStart && new Date(o.date) < wEnd)
+        .reduce((sum, o) => sum + o.quantity, 0);
+
+      const usageMat2 = recentStockOuts
+        .filter(o => o.material?.name === mat2 && new Date(o.date) >= wStart && new Date(o.date) < wEnd)
+        .reduce((sum, o) => sum + o.quantity, 0);
+
+      return {
+        minggu: mgLabel,
+        [mat1]: usageMat1,
+        [mat2]: usageMat2,
+      };
+    });
+
     return res.json({
       success: true,
       data: {
@@ -252,6 +345,9 @@ export const getDashboardSummary = async (req, res) => {
         barangHabis,
         barangMasukHariIni: stockInToday._sum.quantity || 0,
         barangKeluarHariIni: stockOutToday._sum.quantity || 0,
+        chartMonthly,
+        chartUsage,
+        topMaterialNames: [mat1, mat2, mat3]
       }
     });
   } catch (error) {

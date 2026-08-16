@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -11,17 +11,14 @@ import {
   FileText, 
   Settings, 
   User, 
-  Store,
-  ChevronDown,
-  Check
+  Store
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { INITIAL_MOCK_DATA } from '../../services/api';
 
 export default function Sidebar({ isOpen, setIsOpen }) {
-  const { user, activeUmkmId, switchUmkm, isAdmin } = useAuth();
+  const { user, activeUmkmId } = useAuth();
   const location = useLocation();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const currentUmkm = INITIAL_MOCK_DATA.umkms.find(u => u.id === activeUmkmId) || INITIAL_MOCK_DATA.umkms[0];
 
@@ -76,61 +73,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
             </div>
           </div>
 
-          {/* Selector Switcher Custom untuk Admin */}
-          {isAdmin && (
-            <div className="mt-3">
-              <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1 block">Pilih UMKM Target</label>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="w-full flex items-center justify-between text-xs font-semibold bg-slate-100 dark:bg-slate-900 hover:bg-slate-200/80 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 py-2 px-3 rounded-xl border border-slate-200/80 dark:border-slate-800 transition-all cursor-pointer"
-                >
-                  <span className="truncate">{activeUmkmId ? currentUmkm.name : '-- Semua UMKM Gowa --'}</span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-amber-500' : ''}`} />
-                </button>
 
-                {isDropdownOpen && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
-                    <div className="absolute left-0 right-0 top-full mt-1.5 z-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl py-1.5 overflow-hidden animate-fadeIn space-y-0.5">
-                      <button
-                        type="button"
-                        onClick={() => { switchUmkm(null); setIsDropdownOpen(false); }}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-xs text-left font-medium transition-colors ${
-                          !activeUmkmId 
-                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-bold' 
-                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
-                      >
-                        <span>-- Semua UMKM Gowa --</span>
-                        {!activeUmkmId && <Check className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
-                      </button>
-
-                      {INITIAL_MOCK_DATA.umkms.map(u => (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => { switchUmkm(u.id); setIsDropdownOpen(false); }}
-                          className={`w-full flex items-center justify-between px-3 py-2 text-xs text-left font-medium transition-colors ${
-                            activeUmkmId === u.id 
-                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-bold' 
-                              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 truncate">
-                            {u.logo && <img src={u.logo} alt={u.name} className="w-4 h-4 rounded-full object-cover shrink-0" />}
-                            <span className="truncate">{u.name}</span>
-                          </div>
-                          {activeUmkmId === u.id && <Check className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Navigation Links */}

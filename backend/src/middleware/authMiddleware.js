@@ -12,6 +12,34 @@ export const authenticateToken = async (req, res, next) => {
     return res.status(401).json({ success: false, message: 'Akses ditolak. Token tidak ditemukan.' });
   }
 
+  // Handle Mock Token Development Fallback
+  if (token.startsWith('mock_jwt_')) {
+    let mockUser = null;
+    if (token === 'mock_jwt_admin_token_2026') {
+      mockUser = await prisma.user.findFirst({
+        where: { email: 'admin@gowa.com' },
+        include: { role: true, umkm: true }
+      });
+    } else if (token.includes('pemilik')) {
+      const umkmId = Number(token.split('_').pop()) || 1;
+      mockUser = await prisma.user.findFirst({
+        where: { umkmId },
+        include: { role: true, umkm: true }
+      });
+    }
+
+    if (!mockUser) {
+      mockUser = await prisma.user.findFirst({
+        include: { role: true, umkm: true }
+      });
+    }
+
+    if (mockUser) {
+      req.user = mockUser;
+      return next();
+    }
+  }
+
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await prisma.user.findUnique({

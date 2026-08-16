@@ -9,11 +9,11 @@ router.use(authenticateToken);
 // Barang Masuk
 router.get('/in', getStockIn);
 router.post('/in', requireRole(['ADMIN', 'PEMILIK']), createStockIn);
-router.delete('/in/:id', requireRole(['ADMIN']), deleteStockIn);
+router.delete('/in/:id', requireRole(['ADMIN', 'PEMILIK']), deleteStockIn);
 
 // Barang Keluar
 router.get('/out', getStockOut);
 router.post('/out', requireRole(['ADMIN', 'PEMILIK']), createStockOut);
-router.delete('/out/:id', requireRole(['ADMIN']), deleteStockOut);
+router.delete('/out/:id', requireRole(['ADMIN', 'PEMILIK']), deleteStockOut);
 
 export default router;

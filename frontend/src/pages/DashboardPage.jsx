@@ -70,28 +70,26 @@ export default function DashboardPage() {
   const filteredMaterials = materials;
 
   const totalJenisBahan = summaryData.totalJenisBahan || filteredMaterials.length;
-  const totalStokUnit = summaryData.totalStokUnit || filteredMaterials.reduce((acc, m) => acc + m.currentStock, 0);
-  const hampirHabisCount = summaryData.barangHampirHabis;
-  const habisCount = summaryData.barangHabis;
+  const totalStokUnit = summaryData.totalStokUnit || filteredMaterials.reduce((acc, m) => acc + (Number(m.currentStock) || 0), 0);
+  const hampirHabisCount = summaryData.barangHampirHabis !== undefined ? summaryData.barangHampirHabis : filteredMaterials.filter(m => m.currentStock > 0 && m.currentStock <= m.minStock).length;
+  const habisCount = summaryData.barangHabis !== undefined ? summaryData.barangHabis : filteredMaterials.filter(m => m.currentStock === 0).length;
 
   const lowStockItems = filteredMaterials.filter(m => m.currentStock <= m.minStock);
 
-  // Data Grafik Barang Masuk vs Keluar
-  const chartDataMonthly = [
-    { bulan: 'Feb', masuk: 120, keluar: 95 },
-    { bulan: 'Mar', masuk: 150, keluar: 130 },
-    { bulan: 'Apr', masuk: 180, keluar: 170 },
-    { bulan: 'Mei', masuk: 210, keluar: 190 },
-    { bulan: 'Jun', masuk: 195, keluar: 205 },
-    { bulan: 'Jul', masuk: 240, keluar: 220 },
-  ];
+  // Data Grafik Barang Masuk vs Keluar Murni Real dari Database
+  const currentMonths = ['Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul'];
+  const chartDataMonthly = summaryData.chartMonthly || currentMonths.map(b => ({ bulan: b, masuk: 0, keluar: 0 }));
 
-  // Data Grafik Area Tren Penggunaan
-  const chartDataUsage = [
-    { minggu: 'Mg 1', terigu: 45, telur: 20, mentega: 8 },
-    { minggu: 'Mg 2', terigu: 52, telur: 25, mentega: 12 },
-    { minggu: 'Mg 3', terigu: 48, telur: 22, mentega: 10 },
-    { minggu: 'Mg 4', terigu: 60, telur: 30, mentega: 15 },
+  // Data Grafik Area Tren Penggunaan Murni Real dari Database
+  const topNames = summaryData.topMaterialNames || (filteredMaterials.slice(0, 2).map(m => m.name));
+  const mat1 = topNames[0] || 'Bahan Utama 1';
+  const mat2 = topNames[1] || 'Bahan Utama 2';
+
+  const chartDataUsage = summaryData.chartUsage || [
+    { minggu: 'Mg 1', [mat1]: 0, [mat2]: 0 },
+    { minggu: 'Mg 2', [mat1]: 0, [mat2]: 0 },
+    { minggu: 'Mg 3', [mat1]: 0, [mat2]: 0 },
+    { minggu: 'Mg 4', [mat1]: 0, [mat2]: 0 },
   ];
 
   return (
@@ -259,8 +257,8 @@ export default function DashboardPage() {
                 <Tooltip
                   contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
                 />
-                <Area type="monotone" dataKey="terigu" name="Tepung Terigu" stroke="#F59E0B" fillOpacity={1} fill="url(#colorTerigu)" strokeWidth={2} />
-                <Area type="monotone" dataKey="telur" name="Telur Ayam" stroke="#3B82F6" fillOpacity={1} fill="url(#colorTelur)" strokeWidth={2} />
+                <Area type="monotone" dataKey={mat1} name={mat1} stroke="#F59E0B" fillOpacity={1} fill="url(#colorTerigu)" strokeWidth={2} />
+                <Area type="monotone" dataKey={mat2} name={mat2} stroke="#3B82F6" fillOpacity={1} fill="url(#colorTelur)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
