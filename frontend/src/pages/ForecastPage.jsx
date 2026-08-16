@@ -5,8 +5,6 @@ import {
   Calculator, 
   Sparkles, 
   ShoppingBag, 
-  HelpCircle, 
-  ArrowRight,
   Info
 } from 'lucide-react';
 import { 
@@ -21,6 +19,23 @@ import {
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+
+const CustomChartTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-slate-900 p-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 text-xs space-y-1.5">
+        <p className="font-bold text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-1">{label}</p>
+        {payload.map((entry, index) => (
+          <div key={index} className="flex items-center justify-between gap-4 font-semibold" style={{ color: entry.color }}>
+            <span>{entry.name}:</span>
+            <span className="font-bold">{entry.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function ForecastPage() {
   const [searchParams] = useSearchParams();
@@ -86,19 +101,19 @@ export default function ForecastPage() {
     <div className="space-y-6">
       {/* Title */}
       <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold mb-2">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold mb-2 border border-amber-500/20">
           <Sparkles className="w-3.5 h-3.5" /> Single Moving Average Algorithm
         </div>
         <h1 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
           Peramalan Kebutuhan Bahan Baku (Forecasting)
         </h1>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Simulasi kalkulasi prediksi kuantitas kebutuhan stok masa depan berdasarkan histori transaksi pemakaian
         </p>
       </div>
 
       {/* Control Selector Panel */}
-      <div className="p-6 bg-slate-900 text-white rounded-2xl border border-slate-800">
+      <div className="glass-panel p-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
@@ -107,7 +122,7 @@ export default function ForecastPage() {
             <select
               value={selectedMaterialId}
               onChange={(e) => setSelectedMaterialId(Number(e.target.value))}
-              className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
             >
               {materials.map(m => (
                 <option key={m.id} value={m.id}>
@@ -124,7 +139,7 @@ export default function ForecastPage() {
             <select
               value={periodN}
               onChange={(e) => setPeriodN(Number(e.target.value))}
-              className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-amber-500 focus:outline-none transition-all"
             >
               <option value={3}>n = 3 Periode (Direkomendasikan)</option>
               <option value={4}>n = 4 Periode</option>
@@ -132,12 +147,12 @@ export default function ForecastPage() {
             </select>
           </div>
 
-          <div className="glass-card p-3 flex items-center gap-3 bg-white/50 dark:bg-slate-900/50">
-            <div className="p-2 rounded-xl bg-amber-500 text-white font-bold text-xs shrink-0">
+          <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-amber-500 text-white font-bold text-xs shrink-0 shadow-sm">
               STOK
             </div>
             <div>
-              <div className="text-[10px] text-slate-400">Stok Saat Ini / Min</div>
+              <div className="text-[10px] text-amber-700 dark:text-amber-300 font-medium">Stok Saat Ini / Min</div>
               <div className="text-sm font-black text-slate-800 dark:text-slate-100">
                 {selectedMaterial.currentStock} / {selectedMaterial.minStock} {selectedMaterial.unit}
               </div>
@@ -158,9 +173,9 @@ export default function ForecastPage() {
                   <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
                     Grafik Tren Pemakaian Historis vs Hasil Prediksi SMA
                   </h3>
-                  <p className="text-xs text-slate-400">Periode moving average n = {periodN}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Periode moving average n = {periodN}</p>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-500 font-bold text-xs border border-amber-500/30">
+                <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs border border-amber-500/30">
                   {result.forecastResult} {selectedMaterial.unit}
                 </span>
               </div>
@@ -168,12 +183,10 @@ export default function ForecastPage() {
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={result.chartData}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                    <XAxis dataKey="periode" stroke="#94a3b8" fontSize={11} />
-                    <YAxis stroke="#94a3b8" fontSize={11} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
-                    />
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} stroke="#94a3b8" />
+                    <XAxis dataKey="periode" stroke="#64748b" fontSize={11} />
+                    <YAxis stroke="#64748b" fontSize={11} />
+                    <Tooltip content={<CustomChartTooltip />} />
                     <Legend wrapperStyle={{ fontSize: '12px' }} />
                     <Line type="monotone" dataKey="pemakaianHistoris" name="Pemakaian Historis" stroke="#64748b" strokeWidth={2} dot={{ r: 4 }} />
                     <Line type="monotone" dataKey="forecast" name="Forecast SMA (Prediksi)" stroke="#F59E0B" strokeWidth={3} strokeDasharray="4 4" dot={{ r: 6, fill: '#F59E0B' }} />
@@ -190,9 +203,9 @@ export default function ForecastPage() {
               </div>
 
               {/* Mathematical Formula Box */}
-              <div className="p-4 rounded-xl bg-slate-900 text-amber-400 font-mono text-xs space-y-2 border border-slate-800">
-                <div className="font-bold text-white">RUMUS MATEMATIKA:</div>
-                <div>SMA_(t+1) = (X_t + X_(t-1) + ... + X_(t-n+1)) / n</div>
+              <div className="p-4 rounded-xl bg-slate-900 text-amber-400 font-mono text-xs space-y-2 border border-slate-800 shadow-inner">
+                <div className="font-bold text-slate-200">RUMUS MATEMATIKA:</div>
+                <div className="text-amber-400 font-semibold text-sm">SMA_(t+1) = (X_t + X_(t-1) + ... + X_(t-n+1)) / n</div>
                 <div className="text-slate-400 text-[11px] font-sans">
                   Dimana: X_t = Data pemakaian historis pada periode t, n = {periodN} periode moving average.
                 </div>
@@ -200,7 +213,7 @@ export default function ForecastPage() {
 
               <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
                 <div className="font-bold text-slate-800 dark:text-slate-100">Rincian Kalkulasi:</div>
-                <p className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 font-mono text-amber-600 dark:text-amber-400">
+                <p className="p-3.5 rounded-xl bg-amber-50/80 dark:bg-slate-900 border border-amber-200/70 dark:border-slate-800 font-mono text-amber-900 dark:text-amber-400 leading-relaxed">
                   {result.calculationDetails}
                 </p>
               </div>
@@ -210,24 +223,26 @@ export default function ForecastPage() {
           {/* Right Column: Key Forecast Output & Purchasing Recommendation Card */}
           <div className="space-y-6">
             {/* Forecast Output Card */}
-            <div className="p-6 space-y-4 bg-slate-900 text-white rounded-2xl border border-slate-800">
-              <div className="flex items-center gap-2 text-amber-400">
+            <div className="glass-panel p-6 space-y-4 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-950/40 dark:to-slate-900 border border-amber-500/30 dark:border-amber-500/20 shadow-sm rounded-2xl">
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                 <TrendingUp className="w-5 h-5" />
                 <span className="text-xs font-bold uppercase tracking-wider">Hasil Prediksi Peramalan</span>
               </div>
 
               <div>
-                <div className="text-xs text-slate-300">Estimasi Kebutuhan Bulan Depan:</div>
-                <div className="text-3xl font-black text-amber-400 mt-1">
-                  {result.forecastResult} <span className="text-sm font-normal text-white">{selectedMaterial.unit}</span>
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Estimasi Kebutuhan Bulan Depan:</div>
+                <div className="text-3xl font-black text-amber-600 dark:text-amber-400 mt-1">
+                  {result.forecastResult} <span className="text-sm font-normal text-slate-700 dark:text-slate-200">{selectedMaterial.unit}</span>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-800">
-                <div className="text-xs text-slate-300">Rekomendasi Kuantitas Pembelian (Restok):</div>
-                <div className="text-2xl font-extrabold text-emerald-400 mt-1 flex items-center gap-2">
-                  <ShoppingBag className="w-6 h-6" />
-                  +{result.suggestedOrder} {selectedMaterial.unit}
+              <div className="pt-3 border-t border-amber-200/80 dark:border-slate-800">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Rekomendasi Kuantitas Pembelian (Restok):</div>
+                <div className="p-3 mt-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 flex items-center justify-between">
+                  <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                    <ShoppingBag className="w-6 h-6" />
+                    +{result.suggestedOrder} {selectedMaterial.unit}
+                  </div>
                 </div>
               </div>
             </div>
@@ -246,15 +261,15 @@ export default function ForecastPage() {
                   </>
                 ) : (
                   <>
-                    Stok persediaan <span className="font-bold text-emerald-600">{selectedMaterial.name}</span> masih mencukupi untuk memenuhi proyeksi kebutuhan.
+                    Stok persediaan <span className="font-bold text-emerald-600 dark:text-emerald-400">{selectedMaterial.name}</span> masih mencukupi untuk memenuhi proyeksi kebutuhan.
                   </>
                 )}
               </p>
 
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs space-y-1">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs space-y-1.5">
                 <div className="font-bold text-slate-800 dark:text-slate-200">Supplier Direkomendasikan:</div>
                 <div className="text-slate-600 dark:text-slate-400">{selectedMaterial.supplierName}</div>
-                <div className="text-amber-600 font-semibold pt-1">
+                <div className="text-amber-600 dark:text-amber-400 font-semibold pt-1">
                   Estimasi Total Biaya: Rp {(result.suggestedOrder * selectedMaterial.price).toLocaleString('id-ID')}
                 </div>
               </div>
@@ -265,3 +280,4 @@ export default function ForecastPage() {
     </div>
   );
 }
+
