@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, Sun, Moon, Bell, Search, LogOut, CheckCheck, AlertTriangle } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { INITIAL_MOCK_DATA } from '../../services/api';
+import api from '../../services/api';
 
 export default function Navbar({ onToggleSidebar }) {
   const { isDark, toggleTheme } = useTheme();
   const { user, logout, activeUmkmId } = useAuth();
   const [showNotif, setShowNotif] = useState(false);
-  const [notifications, setNotifications] = useState(INITIAL_MOCK_DATA.notifications);
+  const [notifications, setNotifications] = useState([]);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications', {
+        params: activeUmkmId ? { umkmId: activeUmkmId } : {}
+      });
+      if (res.data?.success) {
+        setNotifications(res.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [activeUmkmId]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 

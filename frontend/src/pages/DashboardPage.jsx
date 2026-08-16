@@ -347,35 +347,34 @@ export default function DashboardPage() {
           </p>
 
           <div className="space-y-2.5 pt-1">
-            <div className="p-3 rounded-xl border border-amber-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shadow-none">
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Keju Cheddar Prochiz</div>
-                <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Prediksi: 15 Pcs</div>
+            {lowStockItems.length === 0 ? (
+              <div className="p-4 rounded-xl border border-dashed border-amber-300 dark:border-amber-900/60 text-center text-xs text-amber-800 dark:text-amber-300 font-medium">
+                Belum ada data barang kritis atau transaksi peramalan untuk toko ini.
               </div>
-              <span className="px-3 py-1 rounded-lg bg-red-500 text-white text-xs font-extrabold shadow-none">
-                Order +25 Pcs
-              </span>
-            </div>
-
-            <div className="p-3 rounded-xl border border-amber-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shadow-none">
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Mentega Wijsman</div>
-                <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Prediksi: 8 Kg</div>
-              </div>
-              <span className="px-3 py-1 rounded-lg bg-amber-500 text-white text-xs font-extrabold shadow-none">
-                Order +15 Kg
-              </span>
-            </div>
-
-            <div className="p-3 rounded-xl border border-amber-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shadow-none">
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Minyak Goreng Bimoli</div>
-                <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">Prediksi: 25 Liter</div>
-              </div>
-              <span className="px-3 py-1 rounded-lg bg-amber-500 text-white text-xs font-extrabold shadow-none">
-                Order +38 Liter
-              </span>
-            </div>
+            ) : (
+              lowStockItems.slice(0, 3).map(item => {
+                const suggestedOrder = Math.max(0, (item.minStock * 2) - item.currentStock);
+                const isCritical = item.currentStock === 0;
+                return (
+                  <div key={item.id} className="p-3 rounded-xl border border-amber-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shadow-none">
+                    <div className="min-w-0 pr-2">
+                      <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{item.name}</div>
+                      <div className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
+                        Stok: {item.currentStock} / Min: {item.minStock} {item.unit}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => navigate(`/forecasting?materialId=${item.id}`)}
+                      className={`px-3 py-1 rounded-lg text-white text-xs font-extrabold shadow-none shrink-0 ${
+                        isCritical ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600'
+                      }`}
+                    >
+                      Order +{suggestedOrder} {item.unit}
+                    </button>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           {/* CTA Button without shadow */}
