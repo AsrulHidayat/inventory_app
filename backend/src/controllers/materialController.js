@@ -15,10 +15,12 @@ export const getMaterials = async (req, res) => {
 
     const where = {};
 
+    const userRole = typeof req.user?.role === 'object' ? req.user?.role?.name : req.user?.role;
+
     // Filter per UMKM jika dispesifikasikan atau jika user adalah Pemilik UMKM
     if (umkmId) {
       where.umkmId = Number(umkmId);
-    } else if (req.user.role.name === 'PEMILIK' && req.user.umkmId) {
+    } else if (userRole === 'PEMILIK' && req.user?.umkmId) {
       where.umkmId = req.user.umkmId;
     }
 
@@ -203,13 +205,12 @@ export const deleteMaterial = async (req, res) => {
 export const getDashboardSummary = async (req, res) => {
   try {
     const { umkmId } = req.query;
-    const where = {};
     const userRole = typeof req.user?.role === 'object' ? req.user.role?.name : req.user?.role;
-    
-    if (umkmId) {
-      where.umkmId = Number(umkmId);
-    } else if (userRole === 'PEMILIK' && req.user.umkmId) {
-      where.umkmId = req.user.umkmId;
+    const targetUmkmId = umkmId ? Number(umkmId) : (userRole === 'PEMILIK' ? req.user?.umkmId : null);
+
+    const where = {};
+    if (targetUmkmId) {
+      where.umkmId = targetUmkmId;
     }
 
     const materials = await prisma.material.findMany({ 
@@ -228,23 +229,23 @@ export const getDashboardSummary = async (req, res) => {
       else if (mat.currentStock <= mat.minStock) barangHampirHabis++;
     });
 
-    // Barang Masuk & Keluar Hari Ini
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Barang Masuk & Keluar Hari Ini (00:00:00 sampai sekarang)
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
 
     const stockInToday = await prisma.stockIn.aggregate({
       _sum: { quantity: true },
       where: {
-        date: { gte: today },
-        ...(where.umkmId && { material: { umkmId: where.umkmId } })
+        date: { gte: startOfToday },
+        ...(targetUmkmId ? { material: { umkmId: targetUmkmId } } : {})
       }
     });
 
     const stockOutToday = await prisma.stockOut.aggregate({
       _sum: { quantity: true },
       where: {
-        date: { gte: today },
-        ...(where.umkmId && { material: { umkmId: where.umkmId } })
+        date: { gte: startOfToday },
+        ...(targetUmkmId ? { material: { umkmId: targetUmkmId } } : {})
       }
     });
 
@@ -266,7 +267,7 @@ export const getDashboardSummary = async (req, res) => {
     const allStockIns = await prisma.stockIn.findMany({
       where: {
         date: { gte: sixMonthsAgo },
-        ...(where.umkmId && { material: { umkmId: where.umkmId } })
+        ...(targetUmkmId ? { material: { umkmId: targetUmkmId } } : {})
       },
       select: { quantity: true, date: true }
     });
@@ -274,7 +275,7 @@ export const getDashboardSummary = async (req, res) => {
     const allStockOuts = await prisma.stockOut.findMany({
       where: {
         date: { gte: sixMonthsAgo },
-        ...(where.umkmId && { material: { umkmId: where.umkmId } })
+        ...(targetUmkmId ? { material: { umkmId: targetUmkmId } } : {})
       },
       select: { quantity: true, date: true }
     });
@@ -285,11 +286,11 @@ export const getDashboardSummary = async (req, res) => {
       
       const totalInMonth = allStockIns
         .filter(t => new Date(t.date).getMonth() === targetMonthIdx)
-        .reduce((sum, t) => sum + t.quantity, 0);
+        .reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
 
       const totalOutMonth = allStockOuts
         .filter(t => new Date(t.date).getMonth() === targetMonthIdx)
-        .reduce((sum, t) => sum + t.quantity, 0);
+        .reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
 
       return {
         bulan: bln,
@@ -310,7 +311,7 @@ export const getDashboardSummary = async (req, res) => {
     const recentStockOuts = await prisma.stockOut.findMany({
       where: {
         date: { gte: fourWeeksAgo },
-        ...(where.umkmId && { material: { umkmId: where.umkmId } })
+        ...(targetUmkmId ? { material: { umkmId: targetUmkmId } } : {})
       },
       include: { material: true }
     });
@@ -343,11 +344,11 @@ export const getDashboardSummary = async (req, res) => {
         totalStokUnit,
         barangHampirHabis,
         barangHabis,
-        barangMasukHariIni: stockInToday._sum.quantity || 0,
-        barangKeluarHariIni: stockOutToday._sum.quantity || 0,
+        barangMasukHariIni: stockInToday._sum?.quantity || 0,
+        barangKeluarHariIni: stockOutToday._sum?.quantity || 0,
         chartMonthly,
         chartUsage,
-        topMaterialNames: [mat1, mat2, mat3]
+        topMaterialNames: [mat1, mat2]
       }
     });
   } catch (error) {

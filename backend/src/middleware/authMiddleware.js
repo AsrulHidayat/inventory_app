@@ -60,11 +60,12 @@ export const authenticateToken = async (req, res, next) => {
 
 export const requireRole = (allowedRoles = []) => {
   return (req, res, next) => {
-    if (!req.user || !req.user.role) {
+    const roleName = typeof req.user?.role === 'object' ? req.user?.role?.name : req.user?.role;
+    if (!roleName) {
       return res.status(403).json({ success: false, message: 'Akses dilarang. Permintaan tidak memiliki role valid.' });
     }
 
-    if (!allowedRoles.includes(req.user.role.name)) {
+    if (!allowedRoles.includes(roleName)) {
       return res.status(403).json({ success: false, message: `Akses ditolak. Fitur ini hanya untuk role: ${allowedRoles.join(', ')}` });
     }
 
