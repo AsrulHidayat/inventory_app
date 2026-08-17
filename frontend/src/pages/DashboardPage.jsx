@@ -118,7 +118,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 6 Key Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div id="dashboard-stat-cards" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {/* Total Jenis Bahan */}
         <div className="glass-card p-4 space-y-2">
           <div className="flex items-center justify-between">
@@ -193,7 +193,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Visual Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div id="dashboard-charts" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bar Chart: Masuk vs Keluar */}
         <div className="glass-panel p-6 space-y-4">
           <div className="flex items-center justify-between">
@@ -302,7 +302,7 @@ export default function DashboardPage() {
       {/* Critical Stock Alert Feed & Single Moving Average Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Low Stock Items Alert Feed */}
-        <div className="lg:col-span-2 glass-panel p-6 space-y-4">
+        <div id="dashboard-low-stock" className="lg:col-span-2 glass-panel p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
@@ -365,7 +365,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Widget Summary Peramalan SMA - Primary Color Background Model */}
-        <div className="p-6 space-y-4 rounded-2xl border-2 border-amber-500 bg-amber-500/15 dark:bg-amber-950/40 shadow-sm h-fit self-start sticky top-20 z-10">
+        <div id="dashboard-forecast-widget" className="p-6 space-y-4 rounded-2xl border-2 border-amber-500 bg-amber-500/15 dark:bg-amber-950/40 shadow-sm h-fit self-start sticky top-20 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" />

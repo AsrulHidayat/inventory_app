@@ -23,14 +23,14 @@ export default function Sidebar({ isOpen, setIsOpen }) {
   const currentUmkm = INITIAL_MOCK_DATA.umkms.find(u => u.id === activeUmkmId) || INITIAL_MOCK_DATA.umkms[0];
 
   const menuItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Master Bahan Baku', path: '/master/materials', icon: Package },
-    { label: 'Status Stok', path: '/inventory/stock', icon: Boxes },
-    { label: 'Barang Masuk', path: '/inventory/stock-in', icon: ArrowDownLeft },
-    { label: 'Barang Keluar', path: '/inventory/stock-out', icon: ArrowUpRight },
-    { label: 'Data Supplier', path: '/master/suppliers', icon: Users },
-    { label: 'Forecasting SMA', path: '/forecasting', icon: TrendingUp, highlight: true },
-    { label: 'Laporan Persediaan', path: '/reports', icon: FileText },
+    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, navId: 'nav-dashboard' },
+    { label: 'Master Bahan Baku', path: '/master/materials', icon: Package, navId: 'nav-materials' },
+    { label: 'Status Stok', path: '/inventory/stock', icon: Boxes, navId: 'nav-stock' },
+    { label: 'Barang Masuk', path: '/inventory/stock-in', icon: ArrowDownLeft, navId: 'nav-stock-in' },
+    { label: 'Barang Keluar', path: '/inventory/stock-out', icon: ArrowUpRight, navId: 'nav-stock-out' },
+    { label: 'Data Supplier', path: '/master/suppliers', icon: Users, navId: 'nav-suppliers' },
+    { label: 'Forecasting SMA', path: '/forecasting', icon: TrendingUp, highlight: true, navId: 'nav-forecasting' },
+    { label: 'Laporan Persediaan', path: '/reports', icon: FileText, navId: 'nav-reports' },
   ];
 
   const secondaryItems = [
@@ -82,7 +82,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">
               Menu Utama
             </div>
-            <nav className="space-y-1">
+            <nav id="sidebar-menu-utama" className="space-y-1">
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
@@ -90,6 +90,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                   <NavLink
                     key={item.path}
                     to={item.path}
+                    id={item.navId || undefined}
                     onClick={() => setIsOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all duration-150 group relative ${
                       isActive 

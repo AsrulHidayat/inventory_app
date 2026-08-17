@@ -20,6 +20,296 @@
   }
 }
 
+/* ============================================================
+   TOUR / ONBOARDING OVERLAY STYLES
+   ============================================================ */
+
+/* Backdrop untuk step terpusat */
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.72);
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+  animation: tour-backdrop-in 0.3s ease forwards;
+}
+
+@keyframes tour-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Tooltip card */
+.tour-tooltip {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.35);
+  border-radius: 20px;
+  box-shadow:
+    0 0 0 1px rgba(245,158,11,0.08),
+    0 24px 56px -8px rgba(2,6,23,0.38),
+    0 8px 24px -4px rgba(245,158,11,0.12);
+  overflow: hidden;
+  max-width: 360px;
+}
+
+.dark .tour-tooltip {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+@keyframes tour-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.animate-tour-in {
+  animation: tour-slide-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes tour-slide-in {
+  from {
+    opacity: 0;
+    scale: 0.88;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* Header */
+.tour-tooltip-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid rgba(241, 245, 249, 0.8);
+}
+
+.dark .tour-tooltip-header {
+  border-bottom-color: rgba(30, 41, 59, 0.9);
+}
+
+.tour-tooltip-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.dark .tour-tooltip-title {
+  color: #f1f5f9;
+}
+
+.tour-close-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tour-close-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.dark .tour-close-btn {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+/* Body */
+.tour-tooltip-body {
+  padding: 12px 20px;
+}
+
+.tour-tooltip-desc {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.65;
+}
+
+.dark .tour-tooltip-desc {
+  color: #94a3b8;
+}
+
+/* Progress dots */
+.tour-progress-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 20px 4px;
+}
+
+.tour-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.dark .tour-dot {
+  background: #334155;
+}
+
+.tour-dot.active {
+  width: 18px;
+  border-radius: 3px;
+  background: #F59E0B;
+}
+
+.tour-dot.done {
+  background: #fcd34d;
+}
+
+/* Footer */
+.tour-tooltip-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px 16px;
+  gap: 8px;
+}
+
+.tour-step-counter {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+}
+
+.tour-btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(245,158,11,0.35);
+  transition: all 0.15s ease;
+}
+
+.tour-btn-primary:hover {
+  background: linear-gradient(135deg, #D97706, #B45309);
+  box-shadow: 0 6px 16px rgba(245,158,11,0.45);
+  transform: translateY(-1px);
+}
+
+.tour-btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tour-btn-secondary:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.dark .tour-btn-secondary {
+  background: #1e293b;
+  color: #94a3b8;
+  border-color: #334155;
+}
+
+.dark .tour-btn-secondary:hover {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+.tour-btn-skip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tour-btn-skip:hover {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.dark .tour-btn-skip {
+  border-color: #334155;
+  color: #64748b;
+}
+
+/* Tombol start tour di navbar */
+.tour-start-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(245,158,11,0.1);
+  color: #D97706;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid rgba(245,158,11,0.3);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tour-start-btn:hover {
+  background: rgba(245,158,11,0.2);
+  border-color: rgba(245,158,11,0.5);
+  color: #B45309;
+  transform: translateY(-1px);
+}
+
+.dark .tour-start-btn {
+  background: rgba(245,158,11,0.08);
+  color: #FBBF24;
+  border-color: rgba(245,158,11,0.2);
+}
+
+/* Pulse animasi untuk highlight target */
+@keyframes tour-pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(245,158,11,0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(245,158,11,0); }
+  100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

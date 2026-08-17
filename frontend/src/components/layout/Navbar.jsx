@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Sun, Moon, Bell, Search, LogOut, CheckCheck, AlertTriangle } from 'lucide-react';
+import { Menu, Sun, Moon, Bell, Search, LogOut, CheckCheck, AlertTriangle, MapPin } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useTour } from '../../context/TourContext';
 import api from '../../services/api';
 
 export default function Navbar({ onToggleSidebar }) {
   const { isDark, toggleTheme } = useTheme();
   const { user, logout, activeUmkmId } = useAuth();
+  const { startTour, hasSeenTour } = useTour();
   const [showNotif, setShowNotif] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
@@ -64,6 +66,23 @@ export default function Navbar({ onToggleSidebar }) {
           title={isDark ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
         >
           {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
+        </button>
+
+        {/* Tour Guide Button */}
+        <button
+          id="tour-start-btn"
+          onClick={startTour}
+          className="tour-start-btn relative hidden sm:flex"
+          title="Panduan Pengguna Baru — Mulai Tur Interaktif"
+        >
+          <MapPin className="w-3.5 h-3.5" />
+          <span>Panduan</span>
+          {!hasSeenTour && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white dark:border-slate-950 animate-ping" />
+          )}
+          {!hasSeenTour && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-white dark:border-slate-950" />
+          )}
         </button>
 
         {/* Bell Notification Dropdown */}
