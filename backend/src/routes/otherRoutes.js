@@ -17,7 +17,8 @@ reportRouter.get('/transactions', getTransactionsReport);
 export const umkmRouter = express.Router();
 umkmRouter.use(authenticateToken);
 umkmRouter.get('/', getUmkms);
-umkmRouter.put('/:id', requireRole(['ADMIN']), updateUmkm);
+umkmRouter.put('/:id', requireRole(['ADMIN', 'PEMILIK']), updateUmkm);
+
 
 export const notificationRouter = express.Router();
 notificationRouter.use(authenticateToken);

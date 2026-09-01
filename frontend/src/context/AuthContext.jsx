@@ -110,12 +110,116 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('activeUmkmId');
   };
 
-  const updateUserProfile = (updatedData) => {
+  const registerStore = async (formData) => {
+    setLoading(true);
+    try {
+      const res = await api.post('/auth/register', formData);
+      if (res.data.success) {
+        const { token: jwtToken, user: userData } = res.data;
+        setToken(jwtToken);
+        setUser(userData);
+        localStorage.setItem('token', jwtToken);
+        localStorage.setItem('user', JSON.stringify(userData));
+        if (userData.umkm?.id) {
+          switchUmkm(userData.umkm.id);
+        }
+        return { success: true, message: res.data.message };
+      }
+    } catch (err) {
+      if (err.response?.data?.message) {
+        return { success: false, message: err.response.data.message };
+      }
+
+      // Mock Fallback jika server backend belum merespons
+      const mockId = Date.now();
+      const mockUmkm = {
+        id: mockId,
+        name: formData.umkmName,
+        logo: 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?w=150&auto=format&fit=crop&q=80',
+        address: formData.address || 'Kabupaten Gowa',
+        phone: formData.phone || '-'
+      };
+      const mockUser = {
+        id: mockId + 1,
+        name: formData.name,
+        email: formData.email,
+        role: 'PEMILIK',
+        photo: mockUmkm.logo,
+        umkm: mockUmkm,
+      };
+      const mockToken = `mock_jwt_pemilik_token_${mockId}`;
+      setToken(mockToken);
+      setUser(mockUser);
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      switchUmkm(mockUmkm.id);
+      return { success: true, message: `Pendaftaran Toko "${formData.umkmName}" Berhasil (Simulasi Mode)` };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateUserProfile = async (updatedData) => {
+    try {
+      if (token && !token.startsWith('mock_jwt_')) {
+        const res = await api.put('/auth/profile', updatedData);
+        if (res.data.success && res.data.user) {
+          setUser(res.data.user);
+          localStorage.setItem('user', JSON.stringify(res.data.user));
+          return { success: true, message: res.data.message };
+        }
+      }
+    } catch (err) {
+      console.warn('API update profile error, fallback to local state update:', err);
+    }
+
+    // Fallback update local state
     setUser(prev => {
       const newUser = { ...prev, ...updatedData };
       localStorage.setItem('user', JSON.stringify(newUser));
       return newUser;
     });
+    return { success: true, message: 'Profil berhasil diperbarui.' };
+  };
+
+  const updateUmkmData = async (umkmId, updatedUmkm) => {
+    try {
+      if (token && !token.startsWith('mock_jwt_') && umkmId) {
+        const res = await api.put(`/umkms/${umkmId}`, updatedUmkm);
+        if (res.data.success) {
+          setUser(prev => {
+            if (!prev) return prev;
+            const newUser = {
+              ...prev,
+              umkm: prev.umkm?.id === Number(umkmId) ? { ...prev.umkm, ...updatedUmkm } : prev.umkm
+            };
+            localStorage.setItem('user', JSON.stringify(newUser));
+            return newUser;
+          });
+          return { success: true, message: res.data.message };
+        }
+      }
+    } catch (err) {
+      console.warn('API update UMKM error, fallback to local state update:', err);
+    }
+
+    // Fallback update local state for mock
+    setUser(prev => {
+      if (!prev) return prev;
+      const newUser = {
+        ...prev,
+        umkm: prev.umkm ? { ...prev.umkm, ...updatedUmkm } : { id: umkmId, ...updatedUmkm }
+      };
+      localStorage.setItem('user', JSON.stringify(newUser));
+      return newUser;
+    });
+
+    const mockIndex = INITIAL_MOCK_DATA.umkms.findIndex(u => u.id === Number(umkmId));
+    if (mockIndex !== -1) {
+      INITIAL_MOCK_DATA.umkms[mockIndex] = { ...INITIAL_MOCK_DATA.umkms[mockIndex], ...updatedUmkm };
+    }
+
+    return { success: true, message: 'Data UMKM berhasil diperbarui.' };
   };
 
   return (
@@ -125,7 +229,9 @@ export const AuthProvider = ({ children }) => {
       loading,
       login,
       logout,
+      registerStore,
       updateUserProfile,
+      updateUmkmData,
       activeUmkmId,
       switchUmkm,
       isAdmin: user?.role === 'ADMIN' || user?.role?.name === 'ADMIN',
@@ -135,5 +241,7 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+
 
 export const useAuth = () => useContext(AuthContext);

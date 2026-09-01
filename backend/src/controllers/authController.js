@@ -118,3 +118,89 @@ export const updateProfile = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Gagal memperbarui profil.' });
   }
 };
+
+export const register = async (req, res) => {
+  const { name, email, password, umkmName, address, phone } = req.body;
+
+  try {
+    // 1. Cek apakah email sudah terdaftar
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email sudah terdaftar. Silakan gunakan email lain atau masuk ke akun Anda.' });
+    }
+
+    // 2. Pastikan role PEMILIK tersedia
+    let pemilikRole = await prisma.role.findUnique({
+      where: { name: 'PEMILIK' }
+    });
+
+    if (!pemilikRole) {
+      pemilikRole = await prisma.role.create({
+        data: { name: 'PEMILIK' }
+      });
+    }
+
+    // 3. Buat UMKM baru
+    const newUmkm = await prisma.umkm.create({
+      data: {
+        name: umkmName,
+        address: address || null,
+        phone: phone || null,
+        logo: 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?w=150&auto=format&fit=crop&q=80',
+      }
+    });
+
+    // 4. Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 5. Buat User baru yang terhubung ke UMKM dan role PEMILIK
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        roleId: pemilikRole.id,
+        umkmId: newUmkm.id,
+        photo: newUmkm.logo,
+      },
+      include: { role: true, umkm: true }
+    });
+
+    // 6. Buat JWT token
+    const token = jwt.sign(
+      { id: newUser.id, email: newUser.email, role: newUser.role.name, umkmId: newUser.umkmId },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    // 7. Catat Activity Log
+    await prisma.activityLog.create({
+      data: {
+        userId: newUser.id,
+        action: 'REGISTER_STORE',
+        description: `Pemilik ${newUser.name} mendaftarkan UMKM toko baru: ${newUmkm.name}.`,
+      }
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: `Toko "${newUmkm.name}" dan Akun Pemilik berhasil terdaftar!`,
+      token,
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        photo: newUser.photo,
+        role: newUser.role.name,
+        umkm: { id: newUmkm.id, name: newUmkm.name, logo: newUmkm.logo, address: newUmkm.address, phone: newUmkm.phone }
+      }
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server saat mendaftarkan toko baru.' });
+  }
+};
+
