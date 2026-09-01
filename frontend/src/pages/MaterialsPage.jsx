@@ -8,7 +8,10 @@ import {
   Edit, 
   Trash2, 
   ArrowUpDown,
-  RefreshCw
+  RefreshCw,
+  Tag,
+  Building2,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api, { INITIAL_MOCK_DATA } from '../services/api';
@@ -18,6 +21,8 @@ import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+
+const DEFAULT_CATEGORIES = ['Tepung', 'Dairy & Lemak', 'Minyak & Bumbu', 'Isian & Toping'];
 
 export default function MaterialsPage() {
   const { activeUmkmId } = useAuth();
@@ -35,10 +40,11 @@ export default function MaterialsPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState(null);
+
   const [formData, setFormData] = useState({
     code: '',
     name: '',
-    category: 'Tepung',
+    category: '',
     unit: 'Kg',
     minStock: 10,
     price: 15000,
@@ -80,6 +86,26 @@ export default function MaterialsPage() {
     fetchMaterials();
     fetchSuppliers();
   }, [activeUmkmId]);
+
+  // Global Unique Available Categories for Filter Bar
+  const allAvailableCategories = useMemo(() => {
+    const existingCat = materials.map(m => m.category).filter(Boolean);
+    const supplierCats = suppliers.flatMap(s => s.categoriesList || []);
+    return Array.from(new Set([...DEFAULT_CATEGORIES, ...existingCat, ...supplierCats]));
+  }, [materials, suppliers]);
+
+  // Categories provided by currently selected Supplier in Modal
+  const selectedSupplierObj = useMemo(() => {
+    if (!formData.supplierId) return null;
+    return suppliers.find(s => Number(s.id) === Number(formData.supplierId));
+  }, [suppliers, formData.supplierId]);
+
+  const supplierCategories = useMemo(() => {
+    if (!selectedSupplierObj) return [];
+    const list = selectedSupplierObj.categoriesList || [];
+    if (list.length > 0) return list;
+    return allAvailableCategories; // fallback if supplier hasn't specified categories yet
+  }, [selectedSupplierObj, allAvailableCategories]);
 
   // Filtered & Sorted Materials
   const filteredMaterials = useMemo(() => {
@@ -124,35 +150,70 @@ export default function MaterialsPage() {
   const handleOpenModal = (material = null) => {
     if (material) {
       setEditingMaterial(material);
+      const supId = material.supplierId || suppliers[0]?.id || '';
+      const matchedSup = suppliers.find(s => Number(s.id) === Number(supId));
+      const validCats = matchedSup?.categoriesList?.length ? matchedSup.categoriesList : allAvailableCategories;
+
       setFormData({
         code: material.code,
         name: material.name,
-        category: material.category,
+        category: material.category || validCats[0] || 'Tepung',
         unit: material.unit,
         minStock: material.minStock,
         price: material.price,
         currentStock: material.currentStock,
-        supplierId: material.supplierId || '',
+        supplierId: supId,
       });
     } else {
       setEditingMaterial(null);
+      const defaultSupId = suppliers[0]?.id || '';
+      const matchedSup = suppliers.find(s => Number(s.id) === Number(defaultSupId));
+      const validCats = matchedSup?.categoriesList?.length ? matchedSup.categoriesList : allAvailableCategories;
+
       const newId = materials.length + 1;
       setFormData({
         code: `MAT-NEW-${String(newId).padStart(3, '0')}`,
         name: '',
-        category: 'Tepung',
+        supplierId: defaultSupId,
+        category: validCats[0] || 'Tepung',
         unit: 'Kg',
         minStock: 10,
         price: 15000,
         currentStock: 25,
-        supplierId: suppliers[0]?.id || '',
       });
     }
     setIsModalOpen(true);
   };
 
+  const handleSupplierChange = (newSupplierId) => {
+    const supObj = suppliers.find(s => Number(s.id) === Number(newSupplierId));
+    const supCats = supObj?.categoriesList || [];
+
+    setFormData(prev => {
+      let nextCategory = prev.category;
+      if (supCats.length > 0 && !supCats.includes(prev.category)) {
+        nextCategory = supCats[0];
+      }
+      return {
+        ...prev,
+        supplierId: newSupplierId,
+        category: nextCategory
+      };
+    });
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!formData.supplierId) {
+      Swal.fire('Supplier Belum Dipilih', 'Silakan pilih Supplier Utama terlebih dahulu.', 'warning');
+      return;
+    }
+
+    if (!formData.category) {
+      Swal.fire('Kategori Wajib Diisi', 'Silakan pilih kategori yang disediakan supplier.', 'warning');
+      return;
+    }
+
     try {
       const payload = {
         code: formData.code,
@@ -162,20 +223,20 @@ export default function MaterialsPage() {
         price: Number(formData.price),
         minStock: Number(formData.minStock),
         currentStock: Number(formData.currentStock),
-        supplierId: formData.supplierId ? Number(formData.supplierId) : null,
+        supplierId: Number(formData.supplierId),
         umkmId: activeUmkmId || 1
       };
 
       if (editingMaterial) {
         const res = await api.put(`/materials/${editingMaterial.id}`, payload);
         if (res.data?.success) {
-          Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Data bahan baku berhasil diperbarui di database!', timer: 1500, showConfirmButton: false });
+          Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Data bahan baku berhasil diperbarui!', timer: 1500, showConfirmButton: false });
           fetchMaterials();
         }
       } else {
         const res = await api.post('/materials', payload);
         if (res.data?.success) {
-          Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Bahan baku baru berhasil ditambahkan ke database!', timer: 1500, showConfirmButton: false });
+          Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Bahan baku baru berhasil ditambahkan!', timer: 1500, showConfirmButton: false });
           fetchMaterials();
         }
       }
@@ -264,22 +325,22 @@ export default function MaterialsPage() {
           <p className="text-xs text-slate-400 mt-1">Kelola seluruh persediaan stok bahan baku toko kue & kuliner</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={exportExcel}
-            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all"
+            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4" /> Excel
           </button>
           <button
             onClick={exportPDF}
-            className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all"
+            className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <FileText className="w-4 h-4" /> PDF
           </button>
           <button
             onClick={() => handleOpenModal()}
-            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all"
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Tambah Bahan Baku
           </button>
@@ -303,19 +364,18 @@ export default function MaterialsPage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="text-xs bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-800 focus:outline-none"
+            className="text-xs bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-800 focus:outline-none font-medium"
           >
-            <option value="">-- Semua Kategori --</option>
-            <option value="Tepung">Tepung</option>
-            <option value="Dairy & Lemak">Dairy & Lemak</option>
-            <option value="Minyak & Bumbu">Minyak & Bumbu</option>
-            <option value="Isian & Toping">Isian & Toping</option>
+            <option value="">-- Semua Kategori ({allAvailableCategories.length}) --</option>
+            {allAvailableCategories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
           </select>
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="text-xs bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-800 focus:outline-none"
+            className="text-xs bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-800 focus:outline-none font-medium"
           >
             <option value="">-- Semua Status Stok --</option>
             <option value="AMAN">Stok Aman</option>
@@ -369,7 +429,11 @@ export default function MaterialsPage() {
                   <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40 transition-colors">
                     <td className="py-3 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">{item.code}</td>
                     <td className="py-3 px-4 font-bold text-slate-800 dark:text-slate-100">{item.name}</td>
-                    <td className="py-3 px-4 text-slate-500">{item.category}</td>
+                    <td className="py-3 px-4 text-slate-500">
+                      <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-[11px]">
+                        {item.category}
+                      </span>
+                    </td>
                     <td className="py-3 px-4 font-bold">
                       <span className={item.currentStock === 0 ? 'text-red-500' : item.currentStock <= item.minStock ? 'text-amber-500' : 'text-slate-800 dark:text-slate-200'}>
                         {item.currentStock}
@@ -386,14 +450,14 @@ export default function MaterialsPage() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleOpenModal(item)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors"
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors cursor-pointer"
                           title="Edit Bahan Baku"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(item.id, item.name)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg transition-colors"
+                          className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg transition-colors cursor-pointer"
                           title="Hapus"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -416,7 +480,7 @@ export default function MaterialsPage() {
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              className="px-3 py-1 bg-slate-100 dark:bg-slate-900 rounded-lg disabled:opacity-40 font-semibold"
+              className="px-3 py-1 bg-slate-100 dark:bg-slate-900 rounded-lg disabled:opacity-40 font-semibold cursor-pointer"
             >
               Prev
             </button>
@@ -426,7 +490,7 @@ export default function MaterialsPage() {
             <button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              className="px-3 py-1 bg-slate-100 dark:bg-slate-900 rounded-lg disabled:opacity-40 font-semibold"
+              className="px-3 py-1 bg-slate-100 dark:bg-slate-900 rounded-lg disabled:opacity-40 font-semibold cursor-pointer"
             >
               Next
             </button>
@@ -441,6 +505,33 @@ export default function MaterialsPage() {
         title={editingMaterial ? 'Edit Bahan Baku' : 'Tambah Bahan Baku Baru'}
       >
         <form onSubmit={handleSave} className="space-y-4">
+          {/* STEP 1: PILIH SUPPLIER UTAMA TERLEBIH DAHULU */}
+          <div className="p-3 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 rounded-xl space-y-1">
+            <label className="block text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+              <Building2 className="w-4 h-4 text-amber-500" /> Langkah 1: Pilih Supplier Utama
+            </label>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400">
+              Pilihan kategori bahan baku di bawah akan otomatis disesuaikan dengan katalog yang disediakan oleh supplier yang Anda pilih.
+            </p>
+            <select
+              required
+              value={formData.supplierId}
+              onChange={(e) => handleSupplierChange(e.target.value)}
+              className="w-full mt-2 px-3 py-2 bg-white dark:bg-slate-900 border border-amber-500/40 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            >
+              <option value="">-- Pilih Supplier Utama (Wajib) --</option>
+              {suppliers.map(s => {
+                const catsStr = (s.categoriesList || []).join(', ');
+                return (
+                  <option key={s.id} value={s.id}>
+                    {s.name} {catsStr ? `(${catsStr})` : ''}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          {/* STEP 2: KODE BARANG & KATEGORI HASIL FILTER SUPPLIER */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Kode Barang</label>
@@ -449,21 +540,31 @@ export default function MaterialsPage() {
                 required
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs"
+                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-mono font-bold"
               />
             </div>
+
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Kategori</label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs"
-              >
-                <option value="Tepung">Tepung</option>
-                <option value="Dairy & Lemak">Dairy & Lemak</option>
-                <option value="Minyak & Bumbu">Minyak & Bumbu</option>
-                <option value="Isian & Toping">Isian & Toping</option>
-              </select>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Langkah 2: Kategori (Murni Dari Supplier)
+              </label>
+
+              {!formData.supplierId ? (
+                <div className="px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-dashed border-amber-400 rounded-xl text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 shrink-0" /> Pilih supplier dulu di atas
+                </div>
+              ) : (
+                <select
+                  required
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold"
+                >
+                  {supplierCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
@@ -475,7 +576,7 @@ export default function MaterialsPage() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Contoh: Tepung Terigu Segitiga Biru"
-              className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs"
+              className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold"
             />
           </div>
 
@@ -498,7 +599,7 @@ export default function MaterialsPage() {
                 required
                 value={formData.minStock}
                 onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs"
+                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-amber-600"
               />
             </div>
             <div>
@@ -508,48 +609,33 @@ export default function MaterialsPage() {
                 required
                 value={formData.currentStock}
                 onChange={(e) => setFormData({ ...formData, currentStock: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs"
+                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Harga Satuan (Rp)</label>
-              <input
-                type="number"
-                required
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Supplier Utama</label>
-              <select
-                value={formData.supplierId}
-                onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs"
-              >
-                <option value="">-- Pilih Supplier (Opsional) --</option>
-                {suppliers.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Harga Satuan (Rp)</label>
+            <input
+              type="number"
+              required
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold"
+            />
           </div>
 
           <div className="pt-4 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold"
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-md shadow-amber-500/20"
+              className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-md shadow-amber-500/20 cursor-pointer"
             >
               Simpan Data
             </button>

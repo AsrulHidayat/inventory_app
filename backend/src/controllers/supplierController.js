@@ -8,14 +8,35 @@ export const getSuppliers = async (req, res) => {
       orderBy: { name: 'asc' },
       include: { _count: { select: { materials: true } } }
     });
-    return res.json({ success: true, data: suppliers });
+
+    const formatted = suppliers.map(s => {
+      let categoriesList = [];
+      if (s.categories) {
+        try {
+          const parsed = JSON.parse(s.categories);
+          if (Array.isArray(parsed)) categoriesList = parsed;
+          else if (typeof s.categories === 'string') categoriesList = s.categories.split(',').map(c => c.trim()).filter(Boolean);
+        } catch (e) {
+          if (typeof s.categories === 'string') {
+            categoriesList = s.categories.split(',').map(c => c.trim()).filter(Boolean);
+          }
+        }
+      }
+      return {
+        ...s,
+        categoriesList
+      };
+    });
+
+    return res.json({ success: true, data: formatted });
   } catch (error) {
+    console.error('getSuppliers error:', error);
     return res.status(500).json({ success: false, message: 'Gagal mengambil data supplier.' });
   }
 };
 
 export const createSupplier = async (req, res) => {
-  const { code, name, address, phone, email, notes } = req.body;
+  const { code, name, address, phone, email, notes, categories } = req.body;
   try {
     let supCode = code;
     if (!supCode) {
@@ -23,25 +44,70 @@ export const createSupplier = async (req, res) => {
       supCode = `SUP-${String(count + 1).padStart(3, '0')}`;
     }
 
-    const supplier = await prisma.supplier.create({
-      data: { code: supCode, name, address, phone, email, notes }
+    const catString = Array.isArray(categories) 
+      ? JSON.stringify(categories) 
+      : (typeof categories === 'string' ? categories : null);
+
+    await prisma.$executeRaw`
+      INSERT INTO Supplier (code, name, address, phone, email, notes, categories) 
+      VALUES (${supCode}, ${name}, ${address || null}, ${phone || null}, ${email || null}, ${notes || null}, ${catString})
+    `;
+
+    const createdList = await prisma.supplier.findMany({
+      where: { code: supCode },
+      take: 1
     });
-    return res.status(201).json({ success: true, message: 'Supplier berhasil ditambahkan.', data: supplier });
+    const supplier = createdList[0] || { code: supCode, name, address, phone, email, notes, categories: catString };
+
+    let categoriesList = Array.isArray(categories) ? categories : [];
+
+    return res.status(201).json({ 
+      success: true, 
+      message: 'Supplier berhasil ditambahkan.', 
+      data: { ...supplier, categoriesList } 
+    });
   } catch (error) {
+    console.error('createSupplier error:', error);
     return res.status(500).json({ success: false, message: 'Gagal menambahkan supplier. Kode supplier mungkin sudah terpakai.' });
   }
 };
 
 export const updateSupplier = async (req, res) => {
   const { id } = req.params;
-  const { code, name, address, phone, email, notes } = req.body;
+  const { code, name, address, phone, email, notes, categories } = req.body;
   try {
-    const updated = await prisma.supplier.update({
-      where: { id: Number(id) },
-      data: { code, name, address, phone, email, notes }
+    const catString = Array.isArray(categories) 
+      ? JSON.stringify(categories) 
+      : (typeof categories === 'string' ? categories : null);
+
+    const targetId = Number(id);
+
+    await prisma.$executeRaw`
+      UPDATE Supplier 
+      SET 
+        code = ${code}, 
+        name = ${name}, 
+        address = ${address || null}, 
+        phone = ${phone || null}, 
+        email = ${email || null}, 
+        notes = ${notes || null}, 
+        categories = ${catString} 
+      WHERE id = ${targetId}
+    `;
+
+    const updated = await prisma.supplier.findUnique({
+      where: { id: targetId }
     });
-    return res.json({ success: true, message: 'Supplier berhasil diperbarui.', data: updated });
+
+    let categoriesList = Array.isArray(categories) ? categories : [];
+
+    return res.json({ 
+      success: true, 
+      message: 'Supplier berhasil diperbarui.', 
+      data: { ...updated, categoriesList } 
+    });
   } catch (error) {
+    console.error('updateSupplier error:', error);
     return res.status(500).json({ success: false, message: 'Gagal memperbarui supplier.' });
   }
 };

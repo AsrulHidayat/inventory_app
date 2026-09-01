@@ -7,6 +7,8 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
+const DEFAULT_CATEGORIES = ['Tepung', 'Dairy & Lemak', 'Minyak & Bumbu', 'Isian & Toping'];
+
 export default function ReportsPage() {
   const { activeUmkmId, user } = useAuth();
   const [reportType, setReportType] = useState('inventory'); // 'inventory', 'forecast'
@@ -20,6 +22,13 @@ export default function ReportsPage() {
     : INITIAL_MOCK_DATA.umkms.find(u => u.id === Number(activeUmkmId));
 
   const storeName = currentUmkm?.name || (user?.umkm?.name) || 'UMKM Toko Kue Gowa';
+
+  // Dynamic available categories
+  const availableCategories = React.useMemo(() => {
+    const existingCat = materials.map(m => m.category).filter(Boolean);
+    return Array.from(new Set([...DEFAULT_CATEGORIES, ...existingCat]));
+  }, [materials]);
+
 
   const fetchReportData = async () => {
     try {
@@ -289,14 +298,14 @@ export default function ReportsPage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="text-xs bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 py-1.5 px-3 rounded-xl border border-slate-200 dark:border-slate-800 focus:outline-none"
+            className="text-xs bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 py-1.5 px-3 rounded-xl border border-slate-200 dark:border-slate-800 focus:outline-none font-medium"
           >
-            <option value="">-- Semua Kategori --</option>
-            <option value="Tepung">Tepung</option>
-            <option value="Dairy & Lemak">Dairy & Lemak</option>
-            <option value="Minyak & Bumbu">Minyak & Bumbu</option>
-            <option value="Isian & Toping">Isian & Toping</option>
+            <option value="">-- Semua Kategori ({availableCategories.length}) --</option>
+            {availableCategories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
           </select>
+
         </div>
       </div>
 
