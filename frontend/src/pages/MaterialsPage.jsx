@@ -505,53 +505,32 @@ export default function MaterialsPage() {
         title={editingMaterial ? 'Edit Bahan Baku' : 'Tambah Bahan Baku Baru'}
       >
         <form onSubmit={handleSave} className="space-y-4">
-          {/* STEP 1: PILIH SUPPLIER UTAMA TERLEBIH DAHULU */}
-          <div className="p-3 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 rounded-xl space-y-1">
-            <label className="block text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-              <Building2 className="w-4 h-4 text-amber-500" /> Langkah 1: Pilih Supplier Utama
-            </label>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">
-              Pilihan kategori bahan baku di bawah akan otomatis disesuaikan dengan katalog yang disediakan oleh supplier yang Anda pilih.
-            </p>
-            <select
-              required
-              value={formData.supplierId}
-              onChange={(e) => handleSupplierChange(e.target.value)}
-              className="w-full mt-2 px-3 py-2 bg-white dark:bg-slate-900 border border-amber-500/40 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
-            >
-              <option value="">-- Pilih Supplier Utama (Wajib) --</option>
-              {suppliers.map(s => {
-                const catsStr = (s.categoriesList || []).join(', ');
-                return (
-                  <option key={s.id} value={s.id}>
-                    {s.name} {catsStr ? `(${catsStr})` : ''}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
-          {/* STEP 2: KODE BARANG & KATEGORI HASIL FILTER SUPPLIER */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Kode Barang</label>
-              <input
-                type="text"
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Supplier Utama</label>
+              <select
                 required
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-mono font-bold"
-              />
+                value={formData.supplierId}
+                onChange={(e) => handleSupplierChange(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:border-amber-500 focus:outline-none"
+              >
+                <option value="">-- Pilih Supplier --</option>
+                {suppliers.map(s => {
+                  const catsStr = (s.categoriesList || []).join(', ');
+                  return (
+                    <option key={s.id} value={s.id}>
+                      {s.name} {catsStr ? `(${catsStr})` : ''}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Langkah 2: Kategori (Murni Dari Supplier)
-              </label>
-
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Kategori</label>
               {!formData.supplierId ? (
                 <div className="px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-dashed border-amber-400 rounded-xl text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
-                  <AlertCircle className="w-4 h-4 shrink-0" /> Pilih supplier dulu di atas
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" /> Pilih supplier dulu
                 </div>
               ) : (
                 <select
@@ -568,16 +547,28 @@ export default function MaterialsPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nama Bahan Baku</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Contoh: Tepung Terigu Segitiga Biru"
-              className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Kode Barang</label>
+              <input
+                type="text"
+                required
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-mono font-bold"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nama Bahan Baku</label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Contoh: Tepung Terigu Segitiga Biru"
+                className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">

@@ -288,68 +288,62 @@ export default function SuppliersPage() {
           </div>
 
           {/* Kategori Bahan Baku Yang Disediakan */}
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-            <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-              <Tag className="w-3.5 h-3.5 text-amber-500" /> Kategori Bahan Baku Yang Disediakan Supplier Ini:
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Kategori Yang Disediakan
             </label>
-            
-            <div className="flex flex-wrap items-center gap-1.5">
-              {CATEGORY_SUGGESTIONS.map(cat => {
-                const isSelected = formData.selectedCategories.includes(cat);
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => toggleCategory(cat)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                      isSelected
-                        ? 'bg-amber-500 text-white shadow-xs'
-                        : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300'
-                    }`}
-                  >
-                    {isSelected && <Check className="w-3 h-3" />}
-                    {cat}
-                  </button>
-                );
-              })}
-            </div>
+            <div className="p-3 bg-slate-100 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+              {/* Selected Categories Tags */}
+              <div className="flex flex-wrap items-center gap-1.5 min-h-[28px]">
+                {formData.selectedCategories.length === 0 ? (
+                  <span className="text-xs text-slate-400 italic">Belum ada kategori yang ditambahkan.</span>
+                ) : (
+                  formData.selectedCategories.map(cat => (
+                    <span
+                      key={cat}
+                      className="px-2.5 py-1 rounded-lg bg-amber-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                    >
+                      {cat}
+                      <button
+                        type="button"
+                        onClick={() => toggleCategory(cat)}
+                        className="hover:bg-amber-600 rounded-full p-0.5 transition-colors cursor-pointer"
+                        title="Hapus Kategori"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))
+                )}
+              </div>
 
-            {/* Custom Category Input */}
-            <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-800">
-              <input
-                type="text"
-                value={newCatInput}
-                onChange={(e) => setNewCatInput(e.target.value)}
-                placeholder="Ketik kategori kustom lain..."
-                className="flex-1 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddCustomCategoryTag();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleAddCustomCategoryTag}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold"
-              >
-                + Tambah
-              </button>
-            </div>
-
-            {/* Selected Categories Preview Tags */}
-            <div className="flex flex-wrap items-center gap-1 pt-1">
-              {formData.selectedCategories.map(c => (
-                <span key={c} className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px] font-bold flex items-center gap-1">
-                  {c}
-                  <button type="button" onClick={() => toggleCategory(c)} className="hover:text-red-500 cursor-pointer">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
+              {/* Add Custom Category Input */}
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <input
+                  type="text"
+                  value={newCatInput}
+                  onChange={(e) => setNewCatInput(e.target.value)}
+                  placeholder="Ketik nama kategori (contoh: Tepung, Kemasan)..."
+                  className="flex-1 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:border-amber-500 focus:outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCustomCategoryTag();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomCategoryTag}
+                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold cursor-pointer"
+                >
+                  + Tambah
+                </button>
+              </div>
             </div>
           </div>
+
+
 
           <div className="grid grid-cols-2 gap-4">
             <div>
