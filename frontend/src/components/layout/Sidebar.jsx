@@ -20,7 +20,9 @@ export default function Sidebar({ isOpen, setIsOpen }) {
   const { user, activeUmkmId } = useAuth();
   const location = useLocation();
 
-  const currentUmkm = INITIAL_MOCK_DATA.umkms.find(u => u.id === activeUmkmId) || INITIAL_MOCK_DATA.umkms[0];
+  const currentUmkm = (user?.umkm && (user?.umkm?.id === Number(activeUmkmId) || !activeUmkmId || user?.role === 'PEMILIK' || user?.role?.name === 'PEMILIK'))
+    ? user.umkm
+    : (INITIAL_MOCK_DATA.umkms.find(u => u.id === Number(activeUmkmId)) || user?.umkm || INITIAL_MOCK_DATA.umkms[0]);
 
   const menuItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, navId: 'nav-dashboard' },
@@ -68,10 +70,11 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 INVENTORY SYSTEM
               </div>
               <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
-                {activeUmkmId ? currentUmkm.name : 'Semua UMKM Gowa'}
+                {currentUmkm?.name || (activeUmkmId ? 'Toko UMKM' : 'Semua UMKM Gowa')}
               </h2>
             </div>
           </div>
+
 
 
         </div>

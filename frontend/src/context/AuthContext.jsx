@@ -18,10 +18,16 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user?.umkm?.id && !activeUmkmId) {
-      setActiveUmkmId(user.umkm.id);
+    if (user?.umkm?.id) {
+      const isPemilikRole = user?.role === 'PEMILIK' || user?.role?.name === 'PEMILIK';
+      if (isPemilikRole && activeUmkmId !== user.umkm.id) {
+        switchUmkm(user.umkm.id);
+      } else if (!activeUmkmId) {
+        switchUmkm(user.umkm.id);
+      }
     }
   }, [user]);
+
 
   const switchUmkm = (umkmId) => {
     const id = umkmId ? Number(umkmId) : null;

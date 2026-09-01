@@ -7,11 +7,14 @@ export const getInventoryReport = async (req, res) => {
     const { umkmId, category, startDate, endDate } = req.query;
     const where = {};
 
+    const roleName = typeof req.user?.role === 'object' ? req.user?.role?.name : req.user?.role;
+
     if (umkmId) {
       where.umkmId = Number(umkmId);
-    } else if (req.user.role.name === 'PEMILIK' && req.user.umkmId) {
+    } else if (roleName === 'PEMILIK' && req.user?.umkmId) {
       where.umkmId = req.user.umkmId;
     }
+
 
     if (category) {
       where.category = category;
