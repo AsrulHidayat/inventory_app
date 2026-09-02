@@ -79,15 +79,6 @@ export default function Navbar({ onToggleSidebar }) {
 
       {/* Right Actions */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Dark/Light Mode Switcher */}
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          title={isDark ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
-        >
-          {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
-        </button>
-
         {/* Tour Guide Button */}
         <button
           id="tour-start-btn"
@@ -103,6 +94,15 @@ export default function Navbar({ onToggleSidebar }) {
           {!hasSeenTour && (
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-white dark:border-slate-950" />
           )}
+        </button>
+
+        {/* Dark/Light Mode Switcher */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          title={isDark ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
+        >
+          {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
         </button>
 
         {/* Bell Notification Dropdown */}
