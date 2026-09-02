@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTour } from '../../context/TourContext';
 import api from '../../services/api';
+import Swal from 'sweetalert2';
 
 export default function Navbar({ onToggleSidebar }) {
   const { isDark, toggleTheme } = useTheme();
@@ -11,6 +12,25 @@ export default function Navbar({ onToggleSidebar }) {
   const { startTour, hasSeenTour } = useTour();
   const [showNotif, setShowNotif] = useState(false);
   const [notifications, setNotifications] = useState([]);
+
+  const handleLogout = () => {
+    Swal.fire({
+      title: 'Konfirmasi Logout',
+      text: 'Apakah Anda yakin ingin keluar dari akun?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Ya, Keluar',
+      cancelButtonText: 'Tidak',
+      reverseButtons: true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        logout();
+      }
+    });
+  };
+
 
   const fetchNotifications = async () => {
     try {
@@ -143,14 +163,15 @@ export default function Navbar({ onToggleSidebar }) {
         {/* User Avatar & Logout */}
         <div className="pl-2 border-l border-slate-200 dark:border-slate-800 flex items-center gap-2">
           <button
-            onClick={logout}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-colors"
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-colors cursor-pointer"
             title="Keluar dari sistem"
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
+
       </div>
     </header>
   );

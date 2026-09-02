@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { User, Lock, Camera, Save, Upload, Image as ImageIcon } from 'lucide-react';
+import { User, Lock, Camera, Save, Upload, Image as ImageIcon, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 
 export default function ProfilePage() {
-  const { user, updateUserProfile } = useAuth();
+  const { user, updateUserProfile, logout } = useAuth();
   const [name, setName] = useState(user?.name || '');
   const [photo, setPhoto] = useState(user?.photo || '');
   const [password, setPassword] = useState('');
@@ -12,6 +12,25 @@ export default function ProfilePage() {
   const [isUploading, setIsUploading] = useState(false);
 
   const fileInputRef = useRef(null);
+
+  const handleLogout = () => {
+    Swal.fire({
+      title: 'Konfirmasi Logout',
+      text: 'Apakah Anda yakin ingin keluar dari akun?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Ya, Keluar',
+      cancelButtonText: 'Tidak',
+      reverseButtons: true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        logout();
+      }
+    });
+  };
+
 
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
@@ -189,7 +208,14 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end">
+          <div className="pt-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-bold text-xs rounded-xl flex items-center gap-2 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" /> Keluar Dari Akun
+            </button>
             <button
               type="submit"
               className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-md shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
@@ -197,6 +223,7 @@ export default function ProfilePage() {
               <Save className="w-4 h-4" /> Simpan Perubahan Profil
             </button>
           </div>
+
         </form>
       </div>
     </div>
