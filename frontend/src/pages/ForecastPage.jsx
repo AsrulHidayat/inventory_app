@@ -212,10 +212,50 @@ export default function ForecastPage() {
               </div>
 
               <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
-                <div className="font-bold text-slate-800 dark:text-slate-100">Rincian Kalkulasi:</div>
+                <div className="font-bold text-slate-800 dark:text-slate-100">Rincian Kalkulasi Ringkas:</div>
                 <p className="p-3.5 rounded-xl bg-amber-50/80 dark:bg-slate-900 border border-amber-200/70 dark:border-slate-800 font-mono text-amber-900 dark:text-amber-400 leading-relaxed">
                   {result.calculationDetails}
                 </p>
+              </div>
+            </div>
+
+            {/* Detailed Explanation Box: Why this exact forecast number was calculated */}
+            <div className="glass-panel p-6 space-y-4 bg-amber-500/5 dark:bg-slate-900/80 border border-amber-500/20 rounded-2xl">
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <h3 className="text-sm font-bold">PENJELASAN HASIL PERAMALAN</h3>
+              </div>
+
+              <div className="space-y-3 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                <p>
+                  Metode <strong>Single Moving Average (n={periodN})</strong> meramalkan kebutuhan bulan depan berdasarkan <strong>rata-rata pemakaian {periodN} periode (bulan) terakhir</strong>:
+                </p>
+
+                {/* Display Last N Periods List */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 py-1">
+                  {(result.lastNPeriods || []).map((p, i) => (
+                    <div key={i} className="p-2.5 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-center">
+                      <div className="text-[10px] text-slate-400 font-medium">{p.label}</div>
+                      <div className="text-sm font-extrabold text-amber-600 dark:text-amber-400">{p.value} {selectedMaterial.unit}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-1.5 font-mono text-[11px]">
+                  <div className="font-bold text-slate-800 dark:text-slate-200">1. Perhitungan Rata-Rata Kebutuhan:</div>
+                  <div className="text-amber-600 dark:text-amber-400 font-bold">
+                    ({(result.lastNPeriods || []).map(p => `${p.value}`).join(' + ')}) / {periodN} = {result.forecastResult} {selectedMaterial.unit}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-1.5 font-mono text-[11px]">
+                  <div className="font-bold text-slate-800 dark:text-slate-200">2. Alasan Rekomendasi Restok (+{result.suggestedOrder} {selectedMaterial.unit}):</div>
+                  <div className="text-slate-600 dark:text-slate-300">
+                    Formula: (Kebutuhan Estimasi: {Math.ceil(result.forecastResult)} + Stok Min: {selectedMaterial.minStock}) - Stok Saat Ini: {selectedMaterial.currentStock}
+                  </div>
+                  <div className="text-emerald-600 dark:text-emerald-400 font-bold">
+                    = {result.suggestedOrder > 0 ? `Perlu memesan +${result.suggestedOrder} ${selectedMaterial.unit} agar stok aman.` : `Stok saat ini (${selectedMaterial.currentStock} ${selectedMaterial.unit}) sudah aman.`}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -266,11 +306,32 @@ export default function ForecastPage() {
                 )}
               </p>
 
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs space-y-1.5">
-                <div className="font-bold text-slate-800 dark:text-slate-200">Supplier Direkomendasikan:</div>
-                <div className="text-slate-600 dark:text-slate-400">{selectedMaterial.supplierName}</div>
-                <div className="text-amber-600 dark:text-amber-400 font-semibold pt-1">
-                  Estimasi Total Biaya: Rp {(result.suggestedOrder * selectedMaterial.price).toLocaleString('id-ID')}
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs space-y-2.5">
+                <div>
+                  <div className="font-bold text-slate-800 dark:text-slate-200">Supplier Direkomendasikan:</div>
+                  <div className="text-slate-600 dark:text-slate-400 mt-0.5">{selectedMaterial.supplier?.name || selectedMaterial.supplierName || 'Pemasok Terdaftar'}</div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800 space-y-1.5">
+                  <div className="font-bold text-slate-800 dark:text-slate-200">Rincian Perhitungan Biaya:</div>
+                  
+                  <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 font-mono text-[11px]">
+                    <span>Harga Satuan per {selectedMaterial.unit}:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">Rp {(selectedMaterial.price || 0).toLocaleString('id-ID')}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 font-mono text-[11px]">
+                    <span>Jumlah Kuantitas Restok:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{result.suggestedOrder} {selectedMaterial.unit}</span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-mono text-xs font-bold space-y-1 mt-1">
+                    <div className="text-[10px] text-amber-600 dark:text-amber-400 uppercase font-semibold">Kalkulasi Total Biaya:</div>
+                    <div className="flex items-center justify-between text-amber-900 dark:text-amber-200">
+                      <span>{result.suggestedOrder} {selectedMaterial.unit} &times; Rp {(selectedMaterial.price || 0).toLocaleString('id-ID')}</span>
+                      <span className="text-sm font-black text-amber-600 dark:text-amber-400">= Rp {(result.suggestedOrder * (selectedMaterial.price || 0)).toLocaleString('id-ID')}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

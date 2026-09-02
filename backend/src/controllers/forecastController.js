@@ -80,7 +80,7 @@ export const calculateForecast = async (req, res) => {
 
       return {
         periode: label,
-        pemakaian: historicalValues[idx],
+        pemakaianHistoris: historicalValues[idx],
         forecast: dynamicForecast
       };
     });
@@ -92,9 +92,18 @@ export const calculateForecast = async (req, res) => {
 
     chartData.push({
       periode: nextLabel,
-      pemakaian: null,
+      pemakaianHistoris: null,
       forecast: forecastResultObj.forecastResult,
       isPrediction: true
+    });
+
+    // Rincian n periode terakhir untuk penjelasan transparan
+    const lastNKeys = keys.slice(keys.length - Math.min(n, keys.length));
+    const lastNPeriods = lastNKeys.map((k, idx) => {
+      const [year, month] = k.split('-');
+      const label = `${monthsName[parseInt(month) - 1]} ${year}`;
+      const val = historicalValues[keys.length - lastNKeys.length + idx];
+      return { label, value: val };
     });
 
     // Simpan/update record peramalan
@@ -117,6 +126,7 @@ export const calculateForecast = async (req, res) => {
         suggestedOrder: forecastResultObj.suggestedOrder,
         calculationDetails: forecastResultObj.calculationDetails,
         historicalValues,
+        lastNPeriods,
         chartData,
         recommendation: forecastResultObj.suggestedOrder > 0
           ? `Disarankan melakukan pembelian ${forecastResultObj.suggestedOrder} ${material.unit} dari supplier "${material.supplier?.name || 'Toko Langganan'}" agar stok tidak kehabisan.`
