@@ -26,11 +26,11 @@ export default function Sidebar({ isOpen, setIsOpen }) {
 
   const menuItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, navId: 'nav-dashboard' },
+    { label: 'Data Supplier', path: '/master/suppliers', icon: Users, navId: 'nav-suppliers' },
     { label: 'Master Bahan Baku', path: '/master/materials', icon: Package, navId: 'nav-materials' },
-    { label: 'Status Stok', path: '/inventory/stock', icon: Boxes, navId: 'nav-stock' },
     { label: 'Barang Masuk', path: '/inventory/stock-in', icon: ArrowDownLeft, navId: 'nav-stock-in' },
     { label: 'Barang Keluar', path: '/inventory/stock-out', icon: ArrowUpRight, navId: 'nav-stock-out' },
-    { label: 'Data Supplier', path: '/master/suppliers', icon: Users, navId: 'nav-suppliers' },
+    { label: 'Status Stok', path: '/inventory/stock', icon: Boxes, navId: 'nav-stock' },
     { label: 'Forecasting SMA', path: '/forecasting', icon: TrendingUp, highlight: true, navId: 'nav-forecasting' },
     { label: 'Laporan Persediaan', path: '/reports', icon: FileText, navId: 'nav-reports' },
   ];
