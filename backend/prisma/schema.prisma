@@ -87,7 +87,7 @@ model StockIn {
   date            DateTime @default(now())
   notes           String?
   userId          Int
-  user            User     @relation(fields: [userId], references: [id])
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model StockOut {
@@ -100,7 +100,7 @@ model StockOut {
   date               DateTime @default(now())
   notes              String?
   userId             Int
-  user               User     @relation(fields: [userId], references: [id])
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Forecast {
@@ -117,7 +117,7 @@ model Forecast {
 model Notification {
   id        Int      @id @default(autoincrement())
   userId    Int?
-  user      User?    @relation(fields: [userId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   message   String
   type      String   // "DANGER", "WARNING", "INFO"
@@ -128,7 +128,7 @@ model Notification {
 model ActivityLog {
   id          Int      @id @default(autoincrement())
   userId      Int
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   action      String
   description String
   createdAt   DateTime @default(now())
