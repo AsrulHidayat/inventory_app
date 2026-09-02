@@ -32,8 +32,8 @@ export default function LoginPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
   
   // Login Form States
-  const [email, setEmail] = useState('admin@gowa.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   
   // Register Form States
@@ -138,12 +138,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = (demoEmail, demoPass) => {
-    setMode('login');
-    setEmail(demoEmail);
-    setPassword(demoPass);
-  };
-
   return (
     <div className="relative min-h-screen text-white flex items-center justify-center p-4 md:p-6 overflow-hidden bg-slate-950">
       
@@ -181,10 +175,10 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950/50 via-slate-900/30 to-amber-950/40 pointer-events-none" />
 
       {/* Main Acrylic Glassmorphic Split Card */}
-      <div className="relative z-10 w-full max-w-5xl bg-white/20 dark:bg-slate-900/40 border border-white/50 dark:border-white/20 rounded-3xl p-3 md:p-5 shadow-none backdrop-blur-3xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      <div className="relative z-10 w-full max-w-4xl bg-white/20 dark:bg-slate-900/40 border border-white/50 dark:border-white/20 rounded-3xl p-3 md:p-5 shadow-none backdrop-blur-3xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
         {/* Left Side: Bakery Image Slider Panel with Glass Pods */}
-        <div className="lg:col-span-5 relative rounded-2xl overflow-hidden min-h-[340px] lg:min-h-[580px] flex flex-col justify-between p-6 text-white group border border-white/30 shadow-none">
+        <div className="lg:col-span-5 relative rounded-2xl overflow-hidden min-h-[340px] lg:min-h-[460px] flex flex-col justify-between p-6 text-white group border border-white/30 shadow-none">
           {BAKERY_IMAGES.map((img, idx) => (
             <img
               key={`slider-${idx}`}
@@ -234,7 +228,7 @@ export default function LoginPage() {
         </div>
 
         {/* Right Side: Tab Switcher & Forms */}
-        <div className="lg:col-span-7 p-4 lg:p-6 flex flex-col justify-between space-y-5">
+        <div className="lg:col-span-7 p-4 lg:p-6 flex flex-col justify-center space-y-4">
           <div>
             {/* Mode Switcher Tabs */}
             <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/10 dark:bg-slate-950/50 backdrop-blur-md border border-white/20 mb-6">
@@ -496,48 +490,11 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* Quick Demo Accounts in Glass Pod Cards */}
-          <div className="pt-3 border-t border-white/20">
-            <div className="text-[11px] font-bold text-white/80 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              Quick Demo Accounts (Klik untuk coba):
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin@gowa.com', 'admin123')}
-                className="p-2.5 rounded-xl bg-white/20 dark:bg-slate-950/40 backdrop-blur-md border border-white/30 dark:border-white/20 hover:border-amber-400 text-left transition-all cursor-pointer group shadow-none"
-              >
-                <div className="font-extrabold text-amber-300 group-hover:text-amber-200">Admin Utama</div>
-                <div className="text-[10px] text-white/80 font-medium">admin@gowa.com</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('hr@tokokue.com', 'user123')}
-                className="p-2.5 rounded-xl bg-white/20 dark:bg-slate-950/40 backdrop-blur-md border border-white/30 dark:border-white/20 hover:border-amber-400 text-left transition-all cursor-pointer group shadow-none"
-              >
-                <div className="font-extrabold text-amber-300 group-hover:text-amber-200">Toko Kue HR</div>
-                <div className="text-[10px] text-white/80 font-medium">hr@tokokue.com</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('helda@cireng.com', 'user123')}
-                className="p-2.5 rounded-xl bg-white/20 dark:bg-slate-950/40 backdrop-blur-md border border-white/30 dark:border-white/20 hover:border-amber-400 text-left transition-all cursor-pointer group shadow-none"
-              >
-                <div className="font-extrabold text-amber-300 group-hover:text-amber-200">Cireng Helda</div>
-                <div className="text-[10px] text-white/80 font-medium">helda@cireng.com</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('nanda@risol.com', 'user123')}
-                className="p-2.5 rounded-xl bg-white/20 dark:bg-slate-950/40 backdrop-blur-md border border-white/30 dark:border-white/20 hover:border-amber-400 text-left transition-all cursor-pointer group shadow-none"
-              >
-                <div className="font-extrabold text-amber-300 group-hover:text-amber-200">Risol Mayo Nanda</div>
-                <div className="text-[10px] text-white/80 font-medium">nanda@risol.com</div>
-              </button>
-            </div>
+          {/* Footer System Badge */}
+          <div className="pt-3 border-t border-white/10 flex items-center justify-center gap-2 text-[11px] font-semibold text-white/60">
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+            <span>Sistem Persediaan & Peramalan UMKM Gowa &bull; Secure Auth</span>
           </div>
-
         </div>
       </div>
     </div>
