@@ -69,10 +69,19 @@ export const calculateForecast = async (req, res) => {
     const chartData = keys.map((key, idx) => {
       const [year, month] = key.split('-');
       const label = `${monthsName[parseInt(month) - 1]} ${year}`;
+
+      let dynamicForecast = null;
+      if (idx > 0) {
+        const sliceStart = Math.max(0, idx - n);
+        const subData = historicalValues.slice(sliceStart, idx);
+        const sumSub = subData.reduce((acc, val) => acc + val, 0);
+        dynamicForecast = Number((sumSub / subData.length).toFixed(2));
+      }
+
       return {
         periode: label,
         pemakaian: historicalValues[idx],
-        forecast: idx >= keys.length - n ? forecastResultObj.forecastResult : null
+        forecast: dynamicForecast
       };
     });
 
