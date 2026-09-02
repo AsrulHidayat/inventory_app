@@ -109,6 +109,7 @@ async function main() {
       phone: '081144332211',
       email: 'sumberterigu@gmail.com',
       notes: 'Pemasok utama tepung terigu protein tinggi dan sedang',
+      umkmId: umkmHR.id,
     },
   });
 
@@ -120,6 +121,7 @@ async function main() {
       phone: '085311223344',
       email: 'berkahtelur@gowa.co.id',
       notes: 'Suplai telur ayam segar harian',
+      umkmId: umkmHR.id,
     },
   });
 
@@ -131,6 +133,7 @@ async function main() {
       phone: '081299001122',
       email: 'bakkerysupplier@gmail.com',
       notes: 'Menyediakan Mentega, Keju, Coklat, dan Mayonnaise',
+      umkmId: umkmHR.id,
     },
   });
 

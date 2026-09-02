@@ -21,6 +21,7 @@ model Umkm {
   phone     String?
   users     User[]
   materials Material[]
+  suppliers Supplier[]
 }
 
 model User {
@@ -43,13 +44,15 @@ model User {
 
 model Supplier {
   id         Int        @id @default(autoincrement())
-  code       String     @unique
+  code       String
   name       String
   address    String?
   phone      String?
   email      String?
   notes      String?
   categories String?    // e.g. JSON array or comma-separated string ["Tepung", "Dairy & Lemak"]
+  umkmId     Int?
+  umkm       Umkm?      @relation(fields: [umkmId], references: [id], onDelete: Cascade)
   materials  Material[]
   stockIns   StockIn[]
 }

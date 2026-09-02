@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Users, Search, Edit, Trash2, Phone, Mail, MapPin, Tag, Check, X } from 'lucide-react';
 import api from '../services/api';
 import Modal from '../components/common/Modal';
+import { useAuth } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 
 const CATEGORY_SUGGESTIONS = ['Tepung', 'Dairy & Lemak', 'Minyak & Bumbu', 'Isian & Toping', 'Kemasan & Packaging'];
 
 export default function SuppliersPage() {
+  const { activeUmkmId } = useAuth();
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -27,7 +29,9 @@ export default function SuppliersPage() {
   const fetchSuppliers = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/suppliers');
+      const res = await api.get('/suppliers', {
+        params: activeUmkmId ? { umkmId: activeUmkmId } : {}
+      });
       if (res.data?.success) {
         setSuppliers(res.data.data);
       }
@@ -40,7 +44,7 @@ export default function SuppliersPage() {
 
   useEffect(() => {
     fetchSuppliers();
-  }, []);
+  }, [activeUmkmId]);
 
   const filteredSuppliers = suppliers.filter(s =>
     (s.name || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -109,7 +113,8 @@ export default function SuppliersPage() {
         email: formData.email,
         address: formData.address,
         notes: formData.notes,
-        categories: formData.selectedCategories
+        categories: formData.selectedCategories,
+        umkmId: activeUmkmId
       };
 
       if (editingSupplier) {

@@ -4,7 +4,18 @@ const prisma = new PrismaClient();
 
 export const getSuppliers = async (req, res) => {
   try {
+    const { umkmId } = req.query;
+    const userRole = typeof req.user?.role === 'object' ? req.user?.role?.name : req.user?.role;
+    
+    const where = {};
+    if (umkmId) {
+      where.umkmId = Number(umkmId);
+    } else if (userRole === 'PEMILIK' && req.user?.umkmId) {
+      where.umkmId = req.user.umkmId;
+    }
+
     const suppliers = await prisma.supplier.findMany({
+      where,
       orderBy: { name: 'asc' },
       include: { _count: { select: { materials: true } } }
     });
@@ -36,11 +47,15 @@ export const getSuppliers = async (req, res) => {
 };
 
 export const createSupplier = async (req, res) => {
-  const { code, name, address, phone, email, notes, categories } = req.body;
+  const { code, name, address, phone, email, notes, categories, umkmId } = req.body;
   try {
+    const targetUmkmId = umkmId ? Number(umkmId) : (req.user?.umkmId || null);
+
     let supCode = code;
     if (!supCode) {
-      const count = await prisma.supplier.count();
+      const count = await prisma.supplier.count({
+        where: targetUmkmId ? { umkmId: targetUmkmId } : {}
+      });
       supCode = `SUP-${String(count + 1).padStart(3, '0')}`;
     }
 
@@ -48,16 +63,18 @@ export const createSupplier = async (req, res) => {
       ? JSON.stringify(categories) 
       : (typeof categories === 'string' ? categories : null);
 
-    await prisma.$executeRaw`
-      INSERT INTO Supplier (code, name, address, phone, email, notes, categories) 
-      VALUES (${supCode}, ${name}, ${address || null}, ${phone || null}, ${email || null}, ${notes || null}, ${catString})
-    `;
-
-    const createdList = await prisma.supplier.findMany({
-      where: { code: supCode },
-      take: 1
+    const supplier = await prisma.supplier.create({
+      data: {
+        code: supCode,
+        name,
+        address: address || null,
+        phone: phone || null,
+        email: email || null,
+        notes: notes || null,
+        categories: catString,
+        umkmId: targetUmkmId
+      }
     });
-    const supplier = createdList[0] || { code: supCode, name, address, phone, email, notes, categories: catString };
 
     let categoriesList = Array.isArray(categories) ? categories : [];
 
@@ -68,13 +85,13 @@ export const createSupplier = async (req, res) => {
     });
   } catch (error) {
     console.error('createSupplier error:', error);
-    return res.status(500).json({ success: false, message: 'Gagal menambahkan supplier. Kode supplier mungkin sudah terpakai.' });
+    return res.status(500).json({ success: false, message: 'Gagal menambahkan supplier.' });
   }
 };
 
 export const updateSupplier = async (req, res) => {
   const { id } = req.params;
-  const { code, name, address, phone, email, notes, categories } = req.body;
+  const { code, name, address, phone, email, notes, categories, umkmId } = req.body;
   try {
     const catString = Array.isArray(categories) 
       ? JSON.stringify(categories) 
@@ -82,21 +99,18 @@ export const updateSupplier = async (req, res) => {
 
     const targetId = Number(id);
 
-    await prisma.$executeRaw`
-      UPDATE Supplier 
-      SET 
-        code = ${code}, 
-        name = ${name}, 
-        address = ${address || null}, 
-        phone = ${phone || null}, 
-        email = ${email || null}, 
-        notes = ${notes || null}, 
-        categories = ${catString} 
-      WHERE id = ${targetId}
-    `;
-
-    const updated = await prisma.supplier.findUnique({
-      where: { id: targetId }
+    const updated = await prisma.supplier.update({
+      where: { id: targetId },
+      data: {
+        code,
+        name,
+        address: address || null,
+        phone: phone || null,
+        email: email || null,
+        notes: notes || null,
+        categories: catString,
+        ...(umkmId && { umkmId: Number(umkmId) })
+      }
     });
 
     let categoriesList = Array.isArray(categories) ? categories : [];
